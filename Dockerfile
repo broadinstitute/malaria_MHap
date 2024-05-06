@@ -27,6 +27,7 @@ RUN mamba config \
     r-tmap=3.3_4 \
     r-sp=2.1_3 \
     r-argparse=2.2.2 \
+    r-igraph=2.0.2 \
     unzip=6.0 \
     -c conda-forge -c bioconda && \
     mamba clean --all -f -y && \
