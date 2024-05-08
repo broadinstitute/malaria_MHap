@@ -112,10 +112,10 @@ read_cigar_tables = function(paths = NULL, files = NULL, sample_id_pattern = '.'
     
   }else if(!is.null(files) & length(files) > 1){
     
-    metadata[['Run']] = gsub('^/|_CIGARVariants',
+    metadata[['Run']] = gsub('(^/|_?CIGARVariants|_Bfilter_)',
                              '',
                              str_extract(cigar_table[['Sample_id']], 
-                                         pattern = '/\\w+_CIGARVariants'))
+                                         pattern = '/(\\w+_)?CIGARVariants(_Bfilter_)?(w+|\\d+)?'))
     
   }else if(!is.null(files) & length(files) == 1){
     
@@ -421,6 +421,8 @@ sample_ReadDepth = function(ampseq_object, stat = c('sum', 'mean', 'median', 'sd
 # get_ReadDepth_coverage----
 
 get_ReadDepth_coverage = function(ampseq_object, variable){
+  
+  
   coverage = sapply(1:ncol(ampseq_object@gt), function(mhap){
     
     temp_mhap = strsplit(ampseq_object@gt[,mhap], '_')
@@ -460,13 +462,21 @@ get_ReadDepth_coverage = function(ampseq_object, variable){
     arrange(Read_depth) %>%
     select(Sample_id) %>% unlist
   
+  # print("coverage")
+  # print(coverage)
+  # print("Before max")
+  # print(max(coverage$Read_depth, na.rm =T))
+  # print("Before plot")
+  
+  #print(coverage %>% summarise(readDepth = sum(Read_Depth, na.rm = T), .by = Markers))
   
   plot_read_depth_heatmap = coverage %>% 
     ggplot(aes(x = Markers, y = factor(Sample_id, levels = sample_order), fill = log10(Read_depth+1)))+
     geom_tile()+
     scale_fill_gradient(low="white", high="red",
                         breaks = 1:ceiling(log10(max(coverage$Read_depth, na.rm = T))),
-                        labels = 10^(1:ceiling(log10(max(coverage$Read_depth, na.rm = T)))))+
+                        labels = 10^(1:ceiling(log10(max(coverage$Read_depth, na.rm = T))))
+                        )+
     facet_wrap(var~., scales = 'free_y', ncol = 1)+
     labs(y = 'Samples',
          fill = "Read depth")+
@@ -521,7 +531,7 @@ filter_samples = function(ampseq_object, v){
 
 # locus_amplification_rate----
 
-locus_amplification_rate = function(ampseq_object, threshold = .65, update_loci = TRUE, strata = NULL){
+locus_amplification_rate = function(ampseq_object, threshold = .65, update_loci = TRUE, strata = NULL, based_on_strata = FALSE){
   
   # , chr_lengths = c(640851,
   #                   947102,
@@ -627,7 +637,7 @@ locus_amplification_rate = function(ampseq_object, threshold = .65, update_loci 
   
   if(update_loci){
     
-    if(!is.null(strata)){
+    if(!is.null(strata) & based_on_strata){
       
       discarded_loci = loci_performance[apply(loci_performance[, grepl('loci_ampl_rate', colnames(loci_performance))], 
                                               1,
@@ -676,7 +686,7 @@ locus_amplification_rate = function(ampseq_object, threshold = .65, update_loci 
       #ampseq_object@plots[["amplification_rate_per_locus"]] = amplification_rate_per_locus
       return(ampseq_object)
       
-    }else if(is.null(strata)){
+    }else if((is.null(strata) | !based_on_strata)){
       
       discarded_loci = loci_performance[loci_performance[["loci_ampl_rate_Total"]] <= threshold,][["loci"]]
       keeped_loci = loci_performance[loci_performance[["loci_ampl_rate_Total"]] > threshold,][["loci"]]
@@ -2918,10 +2928,10 @@ get_Fws = function(ampseq_object = NULL){
   Hw = sapply(1:nrow(gt), function(sample){
     
     samp_alleles= gsub(':\\d+', '', gt[sample,])
-    samp_allcounts = gsub('([A-Z]|\\d|\\.)+:', '', gt[sample,])
+    samp_allcounts = gsub('([A-Z]|\\d|\\.|=)+:', '', gt[sample,])
     
-    samp_alleles1 = gsub('_([A-Z]|\\d|\\.)+$', '', samp_alleles)
-    samp_alleles2 = gsub('^([A-Z]|\\d|\\.)+_', '', samp_alleles)
+    samp_alleles1 = gsub('_([A-Z]|\\d|\\.|=)+$', '', samp_alleles)
+    samp_alleles2 = gsub('^([A-Z]|\\d|\\.|=)+_', '', samp_alleles)
     
     samp_check = samp_alleles1 != samp_alleles2
     
@@ -3037,6 +3047,9 @@ get_polygenomic = function(ampseq_object, strata = NULL, update_popsummary = T, 
     if(na.rm){
       gt = gt[!(is.na(metadata[[strata]]) | grepl('NA',metadata[[strata]])),]
       metadata = metadata[!(is.na(metadata[[strata]]) | grepl('NA',metadata[[strata]])),]
+      
+      ampseq_object = filter_samples(ampseq_object, v = !is.na(ampseq_object@metadata[[strata]]))
+      
     }else if(length(metadata[is.na(metadata[[strata]]) | grepl('NA',metadata[[strata]]),][[strata]])>0){
       metadata[is.na(metadata[[strata]]) | grepl('NA',metadata[[strata]]),][[strata]] = 'missing data'
     }
@@ -3044,6 +3057,7 @@ get_polygenomic = function(ampseq_object, strata = NULL, update_popsummary = T, 
     if(!is.null(filters)){
       gt = gt[grepl(filters,metadata[[strata]]),]
       metadata = metadata[grepl(filters,metadata[[strata]]),]
+      ampseq_object = filter_samples(ampseq_object, v = grepl(filters,ampseq_object@metadata[[strata]]))
     }
     
   }
@@ -3069,7 +3083,6 @@ get_polygenomic = function(ampseq_object, strata = NULL, update_popsummary = T, 
                                                                           gt[sample, ][which(grepl("_",gt[sample, ]))], function(x){strsplit(x, "_")}),
                                                                         function(x) length(x)))))))
   }
-  
   
   polygenomic[['Fws']] = get_Fws(ampseq_object)
   

@@ -1,6 +1,5 @@
 #!/bin/r env
 
-write("Watermark 3", stderr())
 library(argparse)
 library(stringr)
 library(rmarkdown)
@@ -143,14 +142,13 @@ parser$add_argument("-pairwise_relatedness_table", "--pairwise_relatedness_table
 parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
                     help="Number of heterozygous loci formula")
 
-# fd = "~/Desktop/mhap_experimental/Code/"
+# fd = "~/Desktop/malaria_MHap/Code/"
 # cigar_paths = NULL
-# #cigar_files = file.path("/Users/jar4142/Desktop/malaria_experimental/cromwell-executions/ampseq/d857623e-4cad-4ddd-b271-97eb8821fdd5/call-ampseq_pipeline/execution/Miseq_Guyana_workshop2023_NA_CIGARVariants_Bfilter.out.tsv")
-# cigar_files = file.path("/Users/jar4142/Desktop/Paulo_Reconcile/cigar_tables/run1_CIGARVariants_Bfilter.out.tsv")
+# cigar_files = file.path("/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/cigar_dir")
 # ampseq_jsonfile = NULL
 # ampseq_excelfile = NULL
-# output = "/Users/jar4142/Desktop/malaria_experimental/"
-# sample_id_pattern = "^ID"
+# output = "/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1"
+# sample_id_pattern = "^[C,G,M,S]"
 # markers = file.path("/Users/jar4142/Desktop/Paulo_Reconcile/Paulo_Reconcile_2/markers.csv")
 # min_abd = 10
 # min_ratio = 0.1
@@ -158,15 +156,14 @@ parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
 # locus_ampl_rate = 0.75
 # PerformanceReport = TRUE
 # Drug_Surveillance_Report= TRUE
-# Variants_of_Interest_Report = FALSE
+# Variants_of_Interest_Report = TRUE
 # ref_gff = "/Users/jar4142/Desktop/MHap_Drive/reference/Pfal_3D7/PlasmoDB-59_Pfalciparum3D7.gff"
 # ref_fasta = "/Users/jar4142/Desktop/MHap_Drive/reference/Pfal_3D7/PlasmoDB-59_Pfalciparum3D7_Genome.fasta"
 # reference_alleles = "/Users/jar4142/Desktop/Paulo_Reconcile/Paulo_Reconcile_2/drugR_alleles.csv"
-# #metadata_file = file.path("/Users/jar4142/Desktop/malaria_experimental/metadata.csv")
-# metadata_file = file.path("/Users/jar4142/Desktop/Paulo_Reconcile/Pfal_metadata_edited.csv")
+# metadata_file = file.path("/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/Pfal_allGates_metadata.csv")
 # join_by = "Sample_id"
-# Variable1 = "Geo_Level"
-# Variable2 = "Temp_Level"
+#Variable1 = "Geo_Level"
+#Variable2 = "Temp_Level"
 # Longitude = "Longitude"
 # Latitude = "Latitude"
 # na_hap_rm = TRUE
@@ -179,13 +176,13 @@ parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
 # ibd_ncol = 4
 # pop_levels = NULL
 # nTasks = NULL
-# selected_checkboxes = "/Users/jar4142/Desktop/MHap_Testing/9_2_MHap_Testing_Ninth_Plate_Guyana/selected_checkboxes.csv"
+#selected_checkboxes = "/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/selected_checkboxes.csv"
 # off_target_formula = "dVSITES_ij>=0.3"
 # flanking_INDEL_formula = "flanking_INDEL==TRUE&h_ij>=0.66"
 # PCR_errors_formula = "h_ij>=0.66&h_ijminor>=0.66"
 # hap_color_palette = "random"
 # poly_quantile = 0.75
-# pairwise_relatedness_table = "/Users/jar4142/Desktop/Paulo_Reconcile/pairwise_relatedness.csv"
+# pairwise_relatedness_table = "/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/MHap_Philipptest2_pairwise_ibd777.csv"
 # poly_formula = "NHetLoci>=1&Fws<1"
 
 # #
@@ -632,8 +629,15 @@ if(PerformanceReport){
                                             by = join_by)
   }
   
+  print("metadata")
+  print(ampseq_object_abd1@metadata)
+  
   ## Sample performance by different coverage----
   ### Overall sample performance by different coverage----
+  print("GT")
+  print(ampseq_object_abd1@gt)
+  print("Before ReadDepth_coverage")
+  
   ReadDepth_coverage = get_ReadDepth_coverage(ampseq_object_abd1, variable = NULL)
   
   sample_performance = ReadDepth_coverage$plot_read_depth_heatmap$data %>%
@@ -701,7 +705,7 @@ if(PerformanceReport){
   
   ### Overall sample performance by different coverage per run----
   
-  ReadDepth_coverage = get_ReadDepth_coverage(ampseq_object_abd1, variable = 'Run')
+  ReadDepth_coverage = get_ReadDepth_coverage(ampseq_object = ampseq_object_abd1, variable = 'Run')
   
   sample_performance = ReadDepth_coverage$plot_read_depth_heatmap$data %>%
     mutate(Read_depth = case_when(
@@ -1661,17 +1665,17 @@ if(!is.null(var_filter)){# ADAPT THIS SECTION IN THE SHINY APP
   filters = strsplit(var_filter,';')
   for(temp_filter in 1:length(filters)){
     
-    if(toupper(filters[[temp_filter]][2]) == 'KEEP'){
+    #if(toupper(filters[[temp_filter]][2]) == 'KEEP'){
       
       ampseq_object = filter_samples(ampseq_object,
-                                     ampseq_object@metadata[[filters[[temp_filter]][1]]] %in% strsplit(filters[[temp_filter]][3],',')[[1]])
+                                     ampseq_object@metadata[[filters[[temp_filter]][1]]] %in% strsplit(filters[[temp_filter]][2],',')[[1]])
       
-    }else if(toupper(filters[[temp_filter]][2]) == 'REMOVE'){
+    #}else if(toupper(filters[[temp_filter]][2]) == 'REMOVE'){
       
-      ampseq_object = filter_samples(ampseq_object,
-                                     !(ampseq_object@metadata[[filters[[temp_filter]][1]]] %in% strsplit(filters[[temp_filter]][3],',')[[1]]))
+    #  ampseq_object = filter_samples(ampseq_object,
+    #                                 !(ampseq_object@metadata[[filters[[temp_filter]][1]]] %in% strsplit(filters[[temp_filter]][3],',')[[1]]))
       
-    }
+    #}
   }
 }
 
@@ -1897,7 +1901,7 @@ if(Drug_Surveillance_Report){
 
 # Variants of interest ----
 print("Entering variant of interest")
-if(Variants_of_Interest_Report){
+if(FALSE){
   
   variables = 'Sample_id'
   
@@ -2267,7 +2271,7 @@ if(!is.null(ibd_thres)){
         fill_color = rep('gray50', length(unique(ampseq_object@metadata[[Variable1]]))),
         threshold = ibd_thres,
         type_pop_comparison = 'within',
-        ncol = ibd_ncol,
+        ncol = 3,
         pop_levels = NULL)
     }
     
@@ -2353,7 +2357,15 @@ if(!is.null(poly_formula)){
     
     print('Calculate COI metrics by Variable1 and Varibale2')
     
-    ampseq_object@metadata[['Var1_Var2']] = paste(ampseq_object@metadata[[Variable1]], ampseq_object@metadata[[Variable2]], sep = '::')
+    
+    ampseq_object@metadata[['Var1_Var2']] = apply(ampseq_object@metadata, 1, function(sample){
+      if(!is.na(sample[Variable1]) &
+         !is.na(sample[Variable2])){
+        paste(sample[Variable1], sample[Variable2], sep = '::')
+      }else{
+        NA
+      }
+    })
     
     poly_by_Var1_Var2 = get_polygenomic(ampseq_object = ampseq_object,
                                         strata = "Var1_Var2",
