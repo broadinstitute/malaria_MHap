@@ -144,11 +144,11 @@ parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
 
 # fd = "~/Desktop/malaria_MHap/Code/"
 # cigar_paths = NULL
-# cigar_files = file.path("/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/cigar_dir")
+# cigar_files = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/cigar_dir_reduced")
 # ampseq_jsonfile = NULL
 # ampseq_excelfile = NULL
-# output = "/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1"
-# sample_id_pattern = "^[C,G,M,S]"
+# output = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/"
+# sample_id_pattern = "^(Z|K)"
 # markers = file.path("/Users/jar4142/Desktop/Paulo_Reconcile/Paulo_Reconcile_2/markers.csv")
 # min_abd = 10
 # min_ratio = 0.1
@@ -160,10 +160,10 @@ parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
 # ref_gff = "/Users/jar4142/Desktop/MHap_Drive/reference/Pfal_3D7/PlasmoDB-59_Pfalciparum3D7.gff"
 # ref_fasta = "/Users/jar4142/Desktop/MHap_Drive/reference/Pfal_3D7/PlasmoDB-59_Pfalciparum3D7_Genome.fasta"
 # reference_alleles = "/Users/jar4142/Desktop/Paulo_Reconcile/Paulo_Reconcile_2/drugR_alleles.csv"
-# metadata_file = file.path("/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/Pfal_allGates_metadata.csv")
+# metadata_file = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Pfal_mock_metadata.csv")
 # join_by = "Sample_id"
-#Variable1 = "Geo_Level"
-#Variable2 = "Temp_Level"
+# Variable1 = "Geo_Level"
+# Variable2 = "Temp_Level"
 # Longitude = "Longitude"
 # Latitude = "Latitude"
 # na_hap_rm = TRUE
@@ -176,13 +176,13 @@ parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
 # ibd_ncol = 4
 # pop_levels = NULL
 # nTasks = NULL
-#selected_checkboxes = "/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/selected_checkboxes.csv"
+# selected_checkboxes = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/selected_checkboxes.csv"
 # off_target_formula = "dVSITES_ij>=0.3"
 # flanking_INDEL_formula = "flanking_INDEL==TRUE&h_ij>=0.66"
 # PCR_errors_formula = "h_ij>=0.66&h_ijminor>=0.66"
 # hap_color_palette = "random"
 # poly_quantile = 0.75
-# pairwise_relatedness_table = "/Users/jar4142/Desktop/MHap_Testing/Philip_scenario_1/MHap_Philipptest2_pairwise_ibd777.csv"
+# pairwise_relatedness_table = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/FULL_SET_pairwise_ibd.csv"
 # poly_formula = "NHetLoci>=1&Fws<1"
 
 # #
@@ -509,46 +509,52 @@ print(paste0('poly_quantile: ', poly_quantile))
 
 # poly_formula filter
 poly_formula = as.character(args$poly_formula)
-poly_formula = gsub('"',"",poly_formula)
 
-poly_formula = gsub('&'," & ",poly_formula, ignore.case = TRUE)
-poly_formula = gsub('\\|'," \\| ",poly_formula, ignore.case = TRUE)
+poly_formula = if(poly_formula == 'null'){NULL}else{as.character(poly_formula)}
 
-if(grepl("\\w>\\d",poly_formula)){
-  patterns = str_extract_all(poly_formula, "\\w>\\d")[[1]]
+if(!is.null(poly_formula)){
+  poly_formula = gsub('"',"",poly_formula)
   
-  for(pattern in patterns){
+  poly_formula = gsub('&'," & ",poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('\\|'," \\| ",poly_formula, ignore.case = TRUE)
+  
+  if(grepl("\\w>\\d",poly_formula)){
+    patterns = str_extract_all(poly_formula, "\\w>\\d")[[1]]
     
-    replacement = gsub('>',' > ',pattern)
-    poly_formula = gsub(pattern,
-                        replacement,
-                        poly_formula, ignore.case = TRUE)
+    for(pattern in patterns){
+      
+      replacement = gsub('>',' > ',pattern)
+      poly_formula = gsub(pattern,
+                          replacement,
+                          poly_formula, ignore.case = TRUE)
+    }
+    
   }
   
-}
-
-if(grepl("\\w<\\d",poly_formula)){
-  patterns = str_extract_all(poly_formula, "\\w<\\d")[[1]]
-  
-  for(pattern in patterns){
+  if(grepl("\\w<\\d",poly_formula)){
+    patterns = str_extract_all(poly_formula, "\\w<\\d")[[1]]
     
-    replacement = gsub('<',' < ',pattern)
-    poly_formula = gsub(pattern,
-                        replacement,
-                        poly_formula, ignore.case = TRUE)
+    for(pattern in patterns){
+      
+      replacement = gsub('<',' < ',pattern)
+      poly_formula = gsub(pattern,
+                          replacement,
+                          poly_formula, ignore.case = TRUE)
+    }
+    
   }
   
+  poly_formula = gsub('>='," >= ", poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('<='," <= ", poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('=='," == ", poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('!='," != ", poly_formula, ignore.case = TRUE)
+  
+  poly_formula = gsub('\\+'," \\+ ", poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('-'," - ", poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('\\*'," \\* ", poly_formula, ignore.case = TRUE)
+  poly_formula = gsub('/'," / ", poly_formula, ignore.case = TRUE)
 }
 
-poly_formula = gsub('>='," >= ", poly_formula, ignore.case = TRUE)
-poly_formula = gsub('<='," <= ", poly_formula, ignore.case = TRUE)
-poly_formula = gsub('=='," == ", poly_formula, ignore.case = TRUE)
-poly_formula = gsub('!='," != ", poly_formula, ignore.case = TRUE)
-
-poly_formula = gsub('\\+'," \\+ ", poly_formula, ignore.case = TRUE)
-poly_formula = gsub('-'," - ", poly_formula, ignore.case = TRUE)
-poly_formula = gsub('\\*'," \\* ", poly_formula, ignore.case = TRUE)
-poly_formula = gsub('/'," / ", poly_formula, ignore.case = TRUE)
 
 
 print(paste0('poly_formula: ', poly_formula))
@@ -718,7 +724,7 @@ if(PerformanceReport){
               amplified_amplicons20 = sum(Read_depth >= 20)/nrow(ampseq_object_abd1@markers),
               amplified_amplicons50 = sum(Read_depth >= 50)/nrow(ampseq_object_abd1@markers),
               amplified_amplicons100 = sum(Read_depth >= 100)/nrow(ampseq_object_abd1@markers),
-              run = unique(var),
+              Run = unique(var),
               .by = Sample_id) %>%
     pivot_longer(cols = starts_with('amplified_amplicons'), values_to = 'AmpRate', names_to = 'Threshold') %>%
     mutate(Threshold = as.integer(gsub('amplified_amplicons', '', Threshold)))
@@ -732,10 +738,10 @@ if(PerformanceReport){
                                    !is.na(Read_depth) ~ Read_depth
                                  )) %>%
                                  summarise(AmpRate = sum(Read_depth >= min_abd)/nrow(ampseq_object_abd1@markers),
-                                           run = unique(var),
+                                           Run = unique(var),
                                            .by = Sample_id) %>%
                                  mutate(Threshold = min_abd) %>%
-                                 select(Sample_id, run, Threshold, AmpRate))
+                                 select(Sample_id, Run, Threshold, AmpRate))
     
   }
   
@@ -760,7 +766,7 @@ if(PerformanceReport){
               AmpRate90 = round(100*sum(AmpRate >= .90)/n(), 1),
               AmpRate95 = round(100*sum(AmpRate >= .95)/n(), 1),
               AmpRate100 = round(100*sum(AmpRate >= 1)/n(), 1),
-              .by = c(Threshold, run)
+              .by = c(Threshold, Run)
     ) %>%
     pivot_longer(cols = paste0('AmpRate', seq(5, 100, 5)),
                  values_to = 'Percentage',
@@ -769,7 +775,7 @@ if(PerformanceReport){
     ggplot(aes(x = AmpRate, y = Percentage, color = as.factor(Threshold), group = as.factor(Threshold))) +
     geom_line() +
     geom_vline(xintercept = 100*sample_ampl_rate, linetype = 2) +
-    facet_wrap(run~., ncol = 3)+
+    facet_wrap(Run~., ncol = 3)+
     theme_bw() +
     labs(x = '% of amplified loci (amplification rate)', y = '% of Samples', color = 'Min Coverage')
   
@@ -853,8 +859,10 @@ if(PerformanceReport){
 
 ## Identification of off target-products and PCR artifacts----
 
+
 ### Off-target products----
 off_target_stats = frac_ofHet_pAlt_byAllele(ampseq_object)
+
 off_target_formula_check = off_target_formula
 
 print('Check filters to be applied for removing off-target products')
@@ -864,6 +872,8 @@ if(grepl("(h_ij|h_ijminor|p_ij|P_ij|H_ij|H_ijminor|nVSITES_ij|dVSITES_ij|nSNPs_i
 }
 
 # modify off_target_formula_check
+
+
 if(grepl("flanking_INDEL ", off_target_formula_check)){
   
   mask_filter = str_extract(off_target_formula_check, "flanking_INDEL (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -875,6 +885,7 @@ if(grepl("flanking_INDEL ", off_target_formula_check)){
     stop("Filter flanking_INDEL is been called but there are spelling issues in this part of the off_target_formula_check")
   }
 }
+
 
 if(grepl("dINDELs_ij ", off_target_formula_check)){
   
@@ -888,6 +899,7 @@ if(grepl("dINDELs_ij ", off_target_formula_check)){
   }
 }
 
+
 if(grepl("nINDELs_ij ", off_target_formula_check)){
   
   mask_filter = str_extract(off_target_formula_check, "nINDELs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -899,6 +911,7 @@ if(grepl("nINDELs_ij ", off_target_formula_check)){
     stop("Filter nINDELs_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("dSNPs_ij ", off_target_formula_check)){
   
@@ -912,6 +925,7 @@ if(grepl("dSNPs_ij ", off_target_formula_check)){
   }
 }
 
+
 if(grepl("nSNPs_ij ", off_target_formula_check)){
   
   mask_filter = str_extract(off_target_formula_check, "nSNPs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -923,6 +937,7 @@ if(grepl("nSNPs_ij ", off_target_formula_check)){
     stop("Filter nSNPs_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("dVSITES_ij ", off_target_formula_check)){
   
@@ -936,6 +951,7 @@ if(grepl("dVSITES_ij ", off_target_formula_check)){
   }
 }
 
+
 if(grepl("nVSITES_ij ", off_target_formula_check)){
   
   mask_filter = str_extract(off_target_formula_check, "nVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -947,6 +963,7 @@ if(grepl("nVSITES_ij ", off_target_formula_check)){
     stop("Filter nVSITES_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("h_ij ", off_target_formula_check)){
   
@@ -1023,6 +1040,7 @@ if(grepl("H_ijminor ", off_target_formula_check)){
 mask_formula_check = str_split(off_target_formula_check, "&|\\|")[[1]]
 mask_formula_check  = mask_formula_check[!grepl("off_target_stats", mask_formula_check)]
 
+
 if(length(mask_formula_check) > 0){
   for(wrong_filter in mask_formula_check){
     print(paste0("Spelling error with filter ", wrong_filter))
@@ -1030,41 +1048,172 @@ if(length(mask_formula_check) > 0){
   stop("Execution halted, revise mask_filter argument.\nPossible filters are:\nh_ij, h_ijminor, p_ij, P_ij, H_ij, H_ijminor, nVSITES_ij, dVSITES_ij, nSNPs_ij, dSNPs_ij, nINDELs_ij, dINDELs_ij, flanking_INDEL")
 }
 
+
 n_off_target_alleles = off_target_stats[eval(parse(text = off_target_formula_check)),][['Allele']]
+
+
+if(PerformanceReport){
+  
+  h_ij_thres = as.numeric(gsub('h_ij (=|!|>|<)+ ',
+                               '',
+                               str_extract(off_target_formula,
+                                           "h_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  h_ijminor_thres = as.numeric(gsub('h_ijminor (=|!|>|<)+ ',
+                                    '',
+                                    str_extract(off_target_formula,
+                                                "h_ijminor (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  dVSITES_ij_thres = as.numeric(gsub('dVSITES_ij (=|!|>|<)+ ',
+                                     '',
+                                     str_extract(off_target_formula,
+                                                 "dVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  plot_off_target_stats = off_target_stats %>%
+    ggplot(aes(x= dVSITES_ij)) + 
+    geom_vline(xintercept = dVSITES_ij_thres,
+               linetype = 2) +
+    geom_histogram(binwidth = 0.01) + 
+    theme_bw()
+  
+  
+  
+  
+  if(!is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
+    
+    plot_off_target_stats2 = off_target_stats %>%
+      mutate(h_ijminor_cat = case_when(
+        h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
+        h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
+      ),
+      dVSITES_ij_cat = case_when(
+        dVSITES_ij >= dVSITES_ij_thres ~ 'Removed',
+        dVSITES_ij < dVSITES_ij_thres ~ 'Kept'
+      )
+      )%>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor,
+                 size = dVSITES_ij))+
+      geom_point()+
+      geom_hline(yintercept = h_ij_thres,
+                 linetype = 2) +
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(dVSITES_ij_cat~h_ijminor_cat)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(!is.na(h_ij_thres) & is.na(h_ijminor_thres)){
+    
+    plot_off_target_stats2 = off_target_stats %>%
+      mutate(dVSITES_ij_cat = case_when(
+        dVSITES_ij >= dVSITES_ij_thres ~ 'Removed',
+        dVSITES_ij < dVSITES_ij_thres ~ 'Kept'
+      )
+      ) %>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor,
+                 size = dVSITES_ij))+
+      geom_point()+
+      geom_hline(yintercept = h_ij_thres,
+                 linetype = 2) +
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(dVSITES_ij_cat~.)+
+      labs(x = 'Alternative allele perv. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
+    
+    plot_off_target_stats2 = off_target_stats %>%
+      mutate(h_ijminor_cat = case_when(
+        h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
+        h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
+      ),
+      dVSITES_ij_cat = case_when(
+        dVSITES_ij >= dVSITES_ij_thres ~ 'Removed',
+        dVSITES_ij < dVSITES_ij_thres ~ 'Kept'
+      ))%>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor,
+                 size = dVSITES_ij))+
+      geom_point()+
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(dVSITES_ij_cat~h_ijminor_cat)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(is.na(h_ij_thres) & is.na(h_ijminor_thres)){
+    
+    plot_off_target_stats2 = off_target_stats %>%
+      mutate(dVSITES_ij_cat = case_when(
+        dVSITES_ij >= dVSITES_ij_thres ~ 'Removed',
+        dVSITES_ij < dVSITES_ij_thres ~ 'Kept'
+      )) %>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor,
+                 size = dVSITES_ij))+
+      geom_point()+
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(dVSITES_ij_cat~.)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }
+  
+  
+  plot_off_target_stats = ggdraw()+
+    draw_plot(plot_off_target_stats, 
+              x = 0, width = .4,
+              y = 0, height = 1)+
+    draw_plot(plot_off_target_stats2, 
+              x = .4, width = .6,
+              y = 0, height = 1)
+  
+}
+
+
 
 if(length(n_off_target_alleles) > 0){
   
   print(paste0(length(n_off_target_alleles), ' allele(s) matches the criteria to define off-target products'))
-  
-  if(PerformanceReport){
-    
-    plot_off_target_stats = off_target_stats %>%
-      ggplot(aes(x= dVSITES_ij)) + 
-      geom_vline(xintercept = as.numeric(gsub('dVSITES_ij (=|!|>|<)+ ',
-                                              '',
-                                              str_extract(off_target_formula,
-                                                          "dVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)"))),
-                 linetype = 2) +
-      geom_histogram(binwidth = 0.01) + 
-      theme_bw()
-  }
-  
   ampseq_object@gt = mask_alt_alleles(ampseq_object, mask_formula = off_target_formula)
+  
 }else{
+  
   print('No allele matches the criteria to define off-target products')
+  
 }
+
+
+
+
+
 
 ### Products with INDELs in their flanking region----
 
 flanking_INDEL_stats = frac_ofHet_pAlt_byAllele(ampseq_object)
+
 flanking_INDEL_formula_check = flanking_INDEL_formula
 
 print('Check filters to be applied for removing off-target products')
+
 if(grepl("(h_ij|h_ijminor|p_ij|P_ij|H_ij|H_ijminor|nVSITES_ij|dVSITES_ij|nSNPs_ij|dSNPs_ij|nINDELs_ij|dINDELs_ij|flanking_INDEL)(<|>|!|=)+", flanking_INDEL_formula_check)){
   stop("All mathematical and logical operators must be separated by blank spaces in flanking_INDEL_formula_check")
 }
 
 # modify flanking_INDEL_formula_check
+
 
 if(grepl("flanking_INDEL ", flanking_INDEL_formula_check)){
   
@@ -1078,7 +1227,9 @@ if(grepl("flanking_INDEL ", flanking_INDEL_formula_check)){
   }
 }
 
+
 if(grepl("dINDELs_ij ", flanking_INDEL_formula_check)){
+  
   mask_filter = str_extract(flanking_INDEL_formula_check, "dINDELs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
   
   if(!is.na(mask_filter)){
@@ -1089,7 +1240,9 @@ if(grepl("dINDELs_ij ", flanking_INDEL_formula_check)){
   }
 }
 
+
 if(grepl("nINDELs_ij ", flanking_INDEL_formula_check)){
+  
   mask_filter = str_extract(flanking_INDEL_formula_check, "nINDELs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
   
   if(!is.na(mask_filter)){
@@ -1100,7 +1253,9 @@ if(grepl("nINDELs_ij ", flanking_INDEL_formula_check)){
   }
 }
 
+
 if(grepl("dSNPs_ij ", flanking_INDEL_formula_check)){
+  
   mask_filter = str_extract(flanking_INDEL_formula_check, "dSNPs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
   
   if(!is.na(mask_filter)){
@@ -1110,6 +1265,7 @@ if(grepl("dSNPs_ij ", flanking_INDEL_formula_check)){
     stop("Filter dSNPs_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("nSNPs_ij ", flanking_INDEL_formula_check)){
   
@@ -1123,6 +1279,7 @@ if(grepl("nSNPs_ij ", flanking_INDEL_formula_check)){
   }
 }
 
+
 if(grepl("dVSITES_ij ", flanking_INDEL_formula_check)){
   
   mask_filter = str_extract(flanking_INDEL_formula_check, "dVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -1135,6 +1292,7 @@ if(grepl("dVSITES_ij ", flanking_INDEL_formula_check)){
   }
 }
 
+
 if(grepl("nVSITES_ij ", flanking_INDEL_formula_check)){
   
   mask_filter = str_extract(flanking_INDEL_formula_check, "nVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -1146,6 +1304,7 @@ if(grepl("nVSITES_ij ", flanking_INDEL_formula_check)){
     stop("Filter nVSITES_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("h_ij ", flanking_INDEL_formula_check)){
   
@@ -1222,6 +1381,7 @@ if(grepl("H_ijminor ", flanking_INDEL_formula_check)){
 mask_formula_check = str_split(flanking_INDEL_formula_check, "&|\\|")[[1]]
 mask_formula_check  = mask_formula_check[!grepl("flanking_INDEL_stats", mask_formula_check)]
 
+
 if(length(mask_formula_check) > 0){
   for(wrong_filter in mask_formula_check){
     print(paste0("Spelling error with filter ", wrong_filter))
@@ -1230,97 +1390,96 @@ if(length(mask_formula_check) > 0){
 }
 
 # Count number of alleles to be filtered
+
 n_flanking_INDEL_alleles = flanking_INDEL_stats[eval(parse(text = flanking_INDEL_formula_check)),][['Allele']]
+
+if(PerformanceReport){
+  
+  h_ij_thres = as.numeric(gsub('h_ij (=|!|>|<)+ ',
+                               '',
+                               str_extract(flanking_INDEL_formula,
+                                           "h_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  h_ijminor_thres = as.numeric(gsub('h_ijminor (=|!|>|<)+ ',
+                                    '',
+                                    str_extract(flanking_INDEL_formula,
+                                                "h_ijminor (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  if(!is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
+    
+    plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
+      mutate(h_ijminor_cat = case_when(
+        h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
+        h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
+      ))%>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      geom_hline(yintercept = h_ij_thres,
+                 linetype = 2) +
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(flanking_INDEL~h_ijminor_cat)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(!is.na(h_ij_thres) & is.na(h_ijminor_thres)){
+    
+    plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      geom_hline(yintercept = h_ij_thres,
+                 linetype = 2) +
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(flanking_INDEL~.)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
+    
+    plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
+      mutate(h_ijminor_cat = case_when(
+        h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
+        h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
+      ))%>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(flanking_INDEL~h_ijminor_cat)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(is.na(h_ij_thres) & is.na(h_ijminor_thres)){
+    
+    plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(flanking_INDEL~.)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }
+  
+}
 
 if(length(n_flanking_INDEL_alleles) > 0){
   
   print(paste0(length(n_flanking_INDEL_alleles), ' allele(s) matches the criteria to identify products with flanking INDELs'))
-  
-  if(PerformanceReport){
-    
-    h_ij_thres = as.numeric(gsub('h_ij (=|!|>|<)+ ',
-                                 '',
-                                 str_extract(flanking_INDEL_formula,
-                                             "h_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
-    
-    h_ijminor_thres = as.numeric(gsub('h_ijminor (=|!|>|<)+ ',
-                                      '',
-                                      str_extract(flanking_INDEL_formula,
-                                                  "h_ijminor (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
-    
-    if(!is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
-      
-      plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
-        mutate(h_ijminor_cat = case_when(
-          h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
-          h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
-        ))%>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        geom_hline(yintercept = h_ij_thres,
-                   linetype = 2) +
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        facet_grid(flanking_INDEL~h_ijminor_cat)+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }else if(!is.na(h_ij_thres) & is.na(h_ijminor_thres)){
-      
-      plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        geom_hline(yintercept = h_ij_thres,
-                   linetype = 2) +
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        facet_grid(flanking_INDEL~.)+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }else if(is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
-      
-      plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
-        mutate(h_ijminor_cat = case_when(
-          h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
-          h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
-        ))%>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        facet_grid(flanking_INDEL~h_ijminor_cat)+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }else if(is.na(h_ij_thres) & is.na(h_ijminor_thres)){
-      
-      plot_flanking_INDEL_stats = flanking_INDEL_stats %>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        facet_grid(flanking_INDEL~.)+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }
-    
-  }
-  
-  
   # mask flanking_INDEL
   ampseq_object@gt = mask_alt_alleles(ampseq_object, mask_formula = flanking_INDEL_formula)
 }else{
@@ -1329,9 +1488,12 @@ if(length(n_flanking_INDEL_alleles) > 0){
   
 }
 
+
+
 ### PCR Errors present as heterozygous----
 
 PCR_errors_stats = frac_ofHet_pAlt_byAllele(ampseq_object)
+
 PCR_errors_formula_check = PCR_errors_formula
 
 print('Check filters to be applied for removing off-target products')
@@ -1341,6 +1503,7 @@ if(grepl("(h_ij|h_ijminor|p_ij|P_ij|H_ij|H_ijminor|nVSITES_ij|dVSITES_ij|nSNPs_i
 }
 
 # modify PCR_errors_formula_check
+
 
 if(grepl("flanking_INDEL ", PCR_errors_formula_check)){
   
@@ -1354,6 +1517,7 @@ if(grepl("flanking_INDEL ", PCR_errors_formula_check)){
   }
 }
 
+
 if(grepl("dINDELs_ij ", PCR_errors_formula_check)){
   
   mask_filter = str_extract(PCR_errors_formula_check, "dINDELs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -1365,6 +1529,7 @@ if(grepl("dINDELs_ij ", PCR_errors_formula_check)){
     stop("Filter dINDELs_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("nINDELs_ij ", PCR_errors_formula_check)){
   
@@ -1378,6 +1543,7 @@ if(grepl("nINDELs_ij ", PCR_errors_formula_check)){
   }
 }
 
+
 if(grepl("dSNPs_ij ", PCR_errors_formula_check)){
   
   mask_filter = str_extract(PCR_errors_formula_check, "dSNPs_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -1389,6 +1555,7 @@ if(grepl("dSNPs_ij ", PCR_errors_formula_check)){
     stop("Filter dSNPs_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("nSNPs_ij ", PCR_errors_formula_check)){
   
@@ -1402,6 +1569,7 @@ if(grepl("nSNPs_ij ", PCR_errors_formula_check)){
   }
 }
 
+
 if(grepl("dVSITES_ij ", PCR_errors_formula_check)){
   
   mask_filter = str_extract(PCR_errors_formula_check, "dVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -1414,6 +1582,7 @@ if(grepl("dVSITES_ij ", PCR_errors_formula_check)){
   }
 }
 
+
 if(grepl("nVSITES_ij ", PCR_errors_formula_check)){
   
   mask_filter = str_extract(PCR_errors_formula_check, "nVSITES_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")
@@ -1425,6 +1594,7 @@ if(grepl("nVSITES_ij ", PCR_errors_formula_check)){
     stop("Filter nVSITES_ij is been called but there are spelling issues in this part of the formula")
   }
 }
+
 
 if(grepl("h_ij ", PCR_errors_formula_check)){
   
@@ -1501,6 +1671,7 @@ if(grepl("H_ijminor ", PCR_errors_formula_check)){
 mask_formula_check = str_split(PCR_errors_formula_check, "&|\\|")[[1]]
 mask_formula_check  = mask_formula_check[!grepl("PCR_errors_stats", mask_formula_check)]
 
+
 if(length(mask_formula_check) > 0){
   for(wrong_filter in mask_formula_check){
     print(paste0("Spelling error with filter ", wrong_filter))
@@ -1512,95 +1683,94 @@ if(length(mask_formula_check) > 0){
 
 n_PCR_errors_alleles = PCR_errors_stats[eval(parse(text = PCR_errors_formula_check)),][['Allele']]
 
+
+if(PerformanceReport){
+  
+  h_ij_thres = as.numeric(gsub('h_ij (=|!|>|<)+ ',
+                               '',
+                               str_extract(PCR_errors_formula,
+                                           "h_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  h_ijminor_thres = as.numeric(gsub('h_ijminor (=|!|>|<)+ ',
+                                    '',
+                                    str_extract(PCR_errors_formula,
+                                                "h_ijminor (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
+  
+  if(!is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
+    
+    plot_PCR_errors_stats = PCR_errors_stats %>%
+      mutate(h_ijminor_cat = case_when(
+        h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
+        h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
+      ))%>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      geom_hline(yintercept = h_ij_thres,
+                 linetype = 2) +
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(.~h_ijminor_cat)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(!is.na(h_ij_thres) & is.na(h_ijminor_thres)){
+    
+    plot_PCR_errors_stats = PCR_errors_stats %>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      geom_hline(yintercept = h_ij_thres,
+                 linetype = 2) +
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
+    
+    plot_PCR_errors_stats = PCR_errors_stats %>%
+      mutate(h_ijminor_cat = case_when(
+        h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
+        h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
+      ))%>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      facet_grid(.~h_ijminor_cat)+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }else if(is.na(h_ij_thres) & is.na(h_ijminor_thres)){
+    
+    plot_PCR_errors_stats = PCR_errors_stats %>%
+      ggplot(aes(x = p_ij, 
+                 y = h_ij,
+                 color = h_ijminor))+
+      geom_point()+
+      theme_bw()+
+      scale_color_continuous(type = 'viridis')+
+      labs(x = 'Alternative allele prev. (p_ij)',
+           y = 'h_ij (H_ij/P_ij)',
+           color = 'h_ijminor')
+    
+  }
+  
+}
+
 if(length(n_PCR_errors_alleles) > 0){
   
   print(paste0(length(n_PCR_errors_alleles), ' allele(s) matches the criteria to identify PCR_errors'))
   
-  if(PerformanceReport){
-    
-    h_ij_thres = as.numeric(gsub('h_ij (=|!|>|<)+ ',
-                                 '',
-                                 str_extract(PCR_errors_formula,
-                                             "h_ij (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
-    
-    h_ijminor_thres = as.numeric(gsub('h_ijminor (=|!|>|<)+ ',
-                                      '',
-                                      str_extract(PCR_errors_formula,
-                                                  "h_ijminor (=|!|>|<)+ (\\d+\\.?\\d*|\\d*\\.?\\d+|TRUE|FALSE)")))
-    
-    if(!is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
-      
-      plot_PCR_errors_stats = PCR_errors_stats %>%
-        mutate(h_ijminor_cat = case_when(
-          h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
-          h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
-        ))%>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        geom_hline(yintercept = h_ij_thres,
-                   linetype = 2) +
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        facet_grid(.~h_ijminor_cat)+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }else if(!is.na(h_ij_thres) & is.na(h_ijminor_thres)){
-      
-      plot_PCR_errors_stats = PCR_errors_stats %>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        geom_hline(yintercept = h_ij_thres,
-                   linetype = 2) +
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }else if(is.na(h_ij_thres) & !is.na(h_ijminor_thres)){
-      
-      plot_PCR_errors_stats = PCR_errors_stats %>%
-        mutate(h_ijminor_cat = case_when(
-          h_ijminor < h_ijminor_thres ~ paste0('h_ijminor < ',h_ijminor_thres),
-          h_ijminor >= h_ijminor_thres ~ paste0('h_ijminor >= ',h_ijminor_thres)
-        ))%>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        facet_grid(.~h_ijminor_cat)+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }else if(is.na(h_ij_thres) & is.na(h_ijminor_thres)){
-      
-      plot_PCR_errors_stats = PCR_errors_stats %>%
-        ggplot(aes(x = p_ij, 
-                   y = h_ij,
-                   color = h_ijminor))+
-        geom_point()+
-        theme_bw()+
-        scale_color_continuous(type = 'viridis')+
-        labs(x = 'Alternative allele frequency (p_ij)',
-             y = 'h_ij (H_ij/P_ij)',
-             color = 'h_ijminor')
-      
-    }
-    
-  }
-  
-  
-  
-  # mask flanking_INDEL
+  # removing PCR_errors_alleles
   gt_masked = mask_alt_alleles(ampseq_object, mask_formula = PCR_errors_formula)
   
   print('gt_masked generated')
@@ -1615,6 +1785,7 @@ if(length(n_PCR_errors_alleles) > 0){
 
 
 ## Coverage by sample and amplicon----
+
 
 if(!is.null(metadata_file)){
   # Merge the external metadata with our ampseq_object
@@ -1732,7 +1903,12 @@ if(PerformanceReport == TRUE){
   
   cigar_table_unmasked_unfiltered = ampseq_object_abd1@gt 
   cigar_table_masked_filtered = ampseq_object@gt
-  cigar_table_controls_masked_filtered = ampseq_object_controls@gt 
+  cigar_table_controls_masked_filtered = ampseq_object_controls@gt
+  
+  metadata_kept_samples = ampseq_object@metadata
+  metadata_removed_samples  = ampseq_object@discarded_samples$metadata
+  
+  
   print('Generation of plots and tables for Performance report done')
   
   
@@ -1740,6 +1916,9 @@ if(PerformanceReport == TRUE){
     'cigar_table_unmasked_unfiltered',
     'cigar_table_masked_filtered',
     'cigar_table_controls_masked_filtered',
+    
+    'metadata_kept_samples',
+    'metadata_removed_samples',
     
     'plot_precentage_of_samples_over_min_abd',
     'plot_precentage_of_samples_over_min_abd_byRun',
@@ -2033,8 +2212,8 @@ if(!is.null(ibd_thres)){
         stat_ellipse(level = .6)+
         scale_color_manual(values = sample(col_vector, nlevels(as.factor(ampseq_object@metadata[[Variable1]]))))+
         theme_bw()+
-        labs(x = paste0('1st PC (', round(evectors_IBD$contrib[1],1), '%)'),
-             y = paste0('2nd PC (', round(evectors_IBD$contrib[2],1), '%)'),
+        labs(x = paste0('1st PCo (', round(evectors_IBD$contrib[1],1), '%)'),
+             y = paste0('2nd PCo (', round(evectors_IBD$contrib[2],1), '%)'),
              color = 'Countries')
       
       
@@ -2101,7 +2280,7 @@ if(!is.null(ibd_thres)){
           fill_color = rep('gray50', length(unique(ampseq_object@metadata[[Variable1]]))),
           threshold = ibd_thres,
           type_pop_comparison = 'within',
-          ncol = ibd_ncol,
+          ncol = 3,
           pop_levels = NULL)
       }
       
@@ -2203,8 +2382,8 @@ if(!is.null(ibd_thres)){
       stat_ellipse(level = .6)+
       scale_color_manual(values = sample(col_vector, nlevels(as.factor(ampseq_object@metadata[[Variable1]]))))+
       theme_bw()+
-      labs(x = paste0('1st PC (', round(evectors_IBD$contrib[1],1), '%)'),
-           y = paste0('2nd PC (', round(evectors_IBD$contrib[2],1), '%)'),
+      labs(x = paste0('1st PCo (', round(evectors_IBD$contrib[1],1), '%)'),
+           y = paste0('2nd PCo (', round(evectors_IBD$contrib[2],1), '%)'),
            color = 'Countries')
     
     
@@ -2337,6 +2516,7 @@ if(!is.null(poly_formula)){
       scale_fill_manual(values = c(sample(col_vector, nlevels(as.factor(ampseq_object@metadata[[Variable1]]))), "gray30"))+
       theme(axis.text = element_text(size = 12),
             axis.title = element_blank(),
+            axis.text.x = element_text(angle = 90, vjust = 0.5),
             legend.position = "none")
     
   }else{
@@ -2394,7 +2574,7 @@ if(!is.null(poly_formula)){
                  fill = Variable1))+
       geom_col()+
       geom_errorbar(width = .2)+
-      facet_wrap(~Variable1, ncol = 5)+
+      facet_wrap(~Variable1, ncol = 3)+
       theme_bw()+
       scale_fill_manual(values = sample(col_vector, nlevels(as.factor(ampseq_object@metadata[[Variable1]]))))+
       labs(title = 'Temporal change of the proportion of polyclonal infections',

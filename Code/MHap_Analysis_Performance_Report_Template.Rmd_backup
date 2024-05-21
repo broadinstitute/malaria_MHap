@@ -48,20 +48,19 @@ inputs in Terra, it will also appear in each of the following plots.
 plot_precentage_of_samples_over_min_abd
 ```
 
-```{r, include=FALSE}
-fig2.height = 3*ceiling(length(unique(plot_precentage_of_samples_over_min_abd_byRun$data$Run))/3)
+#```{r, include=TRUE}
+#fig2.height = 3*ceiling(length(unique(plot_precentage_of_samples_over_min_abd_byRun$data$Run))/3)
+#```
 
-```
-
-```{r, fig.width=10, fig.height=fig2.height, fig.cap = "**Figure 2:** Sample success rate by Sequencing Run based on different thresholds of minimum read depth coverage per allele (ASV or amplicon sequence variant observed in the sample). x-axis represents the percentage of loci (amplicon or marker) which contains alleles that pass the threshold. y-axis represents the percentage of samples which amplify a specific percentage of loci given the allele detection threshold mentioned above."}
+```{r, fig.width=10, fig.height=10, fig.cap = "**Figure 2:** Sample success rate by Sequencing Run based on different thresholds of minimum read depth coverage per allele (ASV or amplicon sequence variant observed in the sample). x-axis represents the percentage of loci (amplicon or marker) which contains alleles that pass the threshold. y-axis represents the percentage of samples which amplify a specific percentage of loci given the allele detection threshold mentioned above."}
 plot_precentage_of_samples_over_min_abd_byRun
 ```
 
-```{r, include = FALSE}
+```{r, include = TRUE}
 fig3.height = 3*ceiling(length(unique(plot_precentage_of_samples_over_min_abd_byVariable1$data$Variable1))/3)
 ```
 
-```{r, fig.width=10, fig.height=fig3.height, fig.cap="**Figure 3:** Sample success rate by Sequencing Run based on different thresholds of minimum read depth coverage per allele (ASV or amplicon sequence variant observed in the sample). x-axis represents the percentage of loci (amplicon or marker) which contains alleles that pass the threshold. y-axis represents the percentage of samples which amplify a specific percentage of loci given the allele detection threshold mentioned above."}
+```{r, fig.width=10, fig.height=10, fig.cap="**Figure 3:** Sample success rate by Sequencing Run based on different thresholds of minimum read depth coverage per allele (ASV or amplicon sequence variant observed in the sample). x-axis represents the percentage of loci (amplicon or marker) which contains alleles that pass the threshold. y-axis represents the percentage of samples which amplify a specific percentage of loci given the allele detection threshold mentioned above."}
 plot_precentage_of_samples_over_min_abd_byVariable1
 ```
 
@@ -222,7 +221,7 @@ if(length(n_PCR_errors_alleles) > 0){
 Fig5.height = length(unique(ReadDepth_coverage$plot_read_depth_heatmap$data$var))*3
 ```
 
-```{r, fig.width=12, fig.height=Fig5.height, fig.cap="**Figure 7:** Read Coverage per sample per locus. The heatmaps show the number of read-pairs obtained per sample (rows) at each locus (columns). Separate panels are used for each value of Variable1 (e.g., sample geographic origin). Darker reds indicate higher read-depth. Grey indicates lack of signal for the locus/sample."}
+```{r, fig.width=12, fig.height=10, fig.cap="**Figure 7:** Read Coverage per sample per locus. The heatmaps show the number of read-pairs obtained per sample (rows) at each locus (columns). Separate panels are used for each value of Variable1 (e.g., sample geographic origin). Darker reds indicate higher read-depth. Grey indicates lack of signal for the locus/sample."}
 ReadDepth_coverage$plot_read_depth_heatmap
 ```
 
@@ -230,7 +229,7 @@ ReadDepth_coverage$plot_read_depth_heatmap
 Fig6.height = length(unique(ReadDepth_coverage_by_run$plot_read_depth_heatmap$data$var))*3
 ```
 
-```{r, fig.width=12, fig.height=Fig6.height, fig.cap="**Figure 8:** Read Coverage per sample per locus by run. The heatmaps show the number of read-pairs obtained per sample (rows) at each locus (columns). Separate panels are used for each sequencing run. Darker reds indicate higher read-depth. Grey indicates lack of signal for the locus/sample."}
+```{r, fig.width=12, fig.height=10, fig.cap="**Figure 8:** Read Coverage per sample per locus by run. The heatmaps show the number of read-pairs obtained per sample (rows) at each locus (columns). Separate panels are used for each sequencing run. Darker reds indicate higher read-depth. Grey indicates lack of signal for the locus/sample."}
 ReadDepth_coverage_by_run$plot_read_depth_heatmap
 ```
 
@@ -253,7 +252,7 @@ the locus_ampl_rate and samp_ampl_rate parameter defined in Terra.
 fig8.height = 2*length(unique(all_loci_amplification_rate$data$Strata))
 ```
 
-```{r, fig.width=7, fig.height=fig8.height, fig.cap="**Figure 10:** Locus amplification rate distribution across categories in Variable1. Each panel represents the cateories of Variable1, and the bottom panel represents the total population and the actual number of loci that are retained. Vertical line represents the locus_ampl_rate threshold set by the user in Terra. Only "}
+```{r, fig.width=7, fig.height=10, fig.cap="**Figure 10:** Locus amplification rate distribution across categories in Variable1. Each panel represents the cateories of Variable1, and the bottom panel represents the total population and the actual number of loci that are retained. Vertical line represents the locus_ampl_rate threshold set by the user in Terra. Only "}
 
 all_loci_amplification_rate
 
@@ -265,7 +264,7 @@ all_loci_amplification_rate
 fig9.height = 2*length(unique(samples_amplification_rate$data$Strata))
 ```
 
-```{r, fig.width=7, fig.height=fig9.height, fig.cap="**Figure 11:** Sample amplification rate distribution across categories in Variable1. Each panel represents the categories of Variable1 and the number within each panel represents the number of samples that are retained in each category."}
+```{r, fig.width=7, fig.height=10, fig.cap="**Figure 11:** Sample amplification rate distribution across categories in Variable1. Each panel represents the categories of Variable1 and the number within each panel represents the number of samples that are retained in each category."}
 
 samples_amplification_rate
 
