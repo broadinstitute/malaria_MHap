@@ -1,6 +1,6 @@
 ---
 title: "*MHap Analysis Report*: Drug Resistance Surveillance - Summary"
-author: "Neafsey Lab"
+author: "02_Plasmodium_Genotype_Population_Analysis by Neafsey Lab"
 output:
   html_document:
   toc: yes
@@ -15,11 +15,11 @@ params:
   RData_image: ""
 ---
   
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, include = TRUE)
 ```
 
-```{r 'Molecular surveillance of drug resistance'}
+```{r 'Molecular surveillance of drug resistance', include = FALSE}
 library(dplyr)
 library(magrittr)
 load(params$RData_image)
@@ -41,7 +41,7 @@ infer the set of genes in each individual parasite. In this sense, this report
 reflects the frequency of alleles at the population level (see further
 explanations below).
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 drug_resistant_haplotypes_plot$dna_mutations %>%
   DT::datatable(extensions = 'Buttons',
                 options = list(
@@ -90,7 +90,7 @@ fig1.height = 2 *
   ceiling(length(unique(drug_resistant_haplotypes_plot$haplotype_freq_barplot$data$gene_haplo))/3)/2
 ```
 
-```{r, fig.width=fig1.width, fig.height=fig1.height}
+```{r, fig.width=fig1.width, fig.height=fig1.height, echo = FALSE}
 drug_resistant_haplotypes_plot$haplotypes_freq_lineplot
 ```
 
@@ -102,14 +102,15 @@ the horizontal grid. Red lines indicate the presence of one or more
 resistance-associated mutations, while blue lines indicate antimalarial-sensitive
 alleles. The intensity of red indicates the number of resistance-associated 
 mutations. Orange lines represents haplotypes carrying mutations with respect to
-the reference strain which have not been associated with resistance. 95%CI.
+the reference strain which have not been associated with resistance. Bars represent
+95% Confidence Intervals.
 
 ## DRUG PHENOTYPES
 
 Resistance to a particular drug can be conferred by mutations in multiple genes.
 For this reason, the drug resistance profile of each sample is determined based
 on the joint analysis of all the genes that have resistance-associated mutations
-to a particular drug. (KEEP REMOVE DETERMINE ->) For example, seven mutations
+to a particular drug. For example, seven mutations
 have been associated with resistance to pyrimethamine. Six of these are found in 
 the pfdhfr gene and one in the pfmdr2 gene. To define the possible phenotype of 
 this drug, therefore, the workflow has analyzed the alleles present in each of 
@@ -146,11 +147,11 @@ fig3.height = 2 *
   length(unique(drug_resistant_haplotypes_plot$drug_phenotype_barplot$data$var1))
 ```
 
-```{r, fig.width=fig3.width, fig.height=fig3.height}
+```{r, fig.width=fig3.width, fig.height=fig3.height, echo = FALSE}
 drug_resistant_haplotypes_plot$drug_phenotyope_lineplot
 ```
 
-#Line Plot
+## Line Plot
 
 Frequency of resistant vs. sensitive phenotypes classified based on amino acid 
 changes in drug resistance-associated genes. For each cell, the vertical and 
@@ -160,12 +161,11 @@ grid. The same applies for genes in the horizontal grid. Red lines indicate the
 presence of one or more resistance-associated mutations, while blue lines 
 indicate antimalarial-sensitive alleles. Yellow lines represents haplotypes 
 carrying mutations with respect to the reference strain which have not been 
-associated with resistance.95%CI.
+associated with resistance. Bars represent 95% Confidence Intervals.
 
-##MAP
-Map of frequency of resistance per geographical area. 
+## Frequency of resistance per geographical area. 
 
-```{r, fig.width=10, fig.height=10} 
+```{r, fig.width=10, fig.height=10, echo = FALSE} 
 if(!is.null(Longitude) & !is.null(Latitude)){
   library(tmap)
   tmap_mode('view')
@@ -180,3 +180,4 @@ Genotype:
 Locus (p. Loci):
 Haplotype:
 Complexity of infection:
+Confidence Interval:
