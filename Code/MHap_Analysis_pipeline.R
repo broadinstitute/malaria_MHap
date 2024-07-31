@@ -2076,6 +2076,14 @@ if(Drug_Surveillance_Report){
     RData_image = imagename),
     output_dir = "Results")
   print("Leaving render script")
+
+  system(paste0('cp ', file.path(fd, 'MHap_Analysis_DRS_Minimal_Report_Template.Rmd'), ' ', file.path(paste0(output, '_DRS_Minimal_Report.Rmd'))))
+  # Assign variables based on command-line arguments
+  render(file.path(paste0(output, '_DRS_Minimal_Report.Rmd')), params = list(
+    RData_image = imagename),
+    output_dir = "Results")
+  print("Leaving render script")
+
 }
 
 # Variants of interest ----
