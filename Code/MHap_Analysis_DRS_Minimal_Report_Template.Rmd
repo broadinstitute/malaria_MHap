@@ -2,15 +2,9 @@
 title: "*MHap Analysis Report*: Drug Resistance Surveillance - Summary"
 author: "02_Plasmodium_Genotype_Population_Analysis by Neafsey Lab"
 output:
-  html_document:
-  toc: yes
-number_sections: no
-toc_float: yes
-code_folding: hide
-editor_options:
-  markdown:
-  wrap: 72
-chunk_output_type: inline
+  pdf_document:
+    toc: yes
+    number_sections: no
 params:
   RData_image: ""
 ---
