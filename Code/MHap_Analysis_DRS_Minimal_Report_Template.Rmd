@@ -159,13 +159,13 @@ associated with resistance. Bars represent 95% Confidence Intervals.
 
 ## Frequency of resistance per geographical area. 
 
-#```{r, fig.width=10, fig.height=10, echo = FALSE} 
-#if(!is.null(Longitude) & !is.null(Latitude)){
-#  library(tmap)
-#  tmap_mode('view')
-#  drug_resistant_haplotypes_plot$i_drug_map  
-#}
-#```
+```{r, fig.width=10, fig.height=10, echo = FALSE} 
+if(!is.null(Longitude) & !is.null(Latitude)){
+  library(tmap)
+  tmap_mode('view')
+  drug_resistant_haplotypes_plot$i_drug_map  
+}
+```
 
 ## Glossary
 
