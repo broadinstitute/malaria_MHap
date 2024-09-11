@@ -1,10 +1,10 @@
 #!/bin/r env
-
+if (TRUE) {
 library(argparse)
 library(stringr)
 library(rmarkdown)
 # Parse arguments ----
-
+if(FALSE){
 parser = ArgumentParser()
 
 parser$add_argument("-fd", "--fd", default = 'null',
@@ -141,50 +141,51 @@ parser$add_argument("-pairwise_relatedness_table", "--pairwise_relatedness_table
 
 parser$add_argument("-poly_formula", "--poly_formula", default = 'null',
                     help="Number of heterozygous loci formula")
+}
+fd = "~/Desktop/malaria_MHap/Code/"
+cigar_paths = NULL
+cigar_files = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/cigar_dir")
+ampseq_jsonfile = NULL
+ampseq_excelfile = NULL
+output = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/"
+sample_id_pattern = "^(Z)"
+markers = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Reference_Data/markers.csv")
+min_abd = 10
+min_ratio = 0.1
+sample_ampl_rate = 0.75
+locus_ampl_rate = 0.75
+PerformanceReport = TRUE
+Drug_Surveillance_Report= TRUE
+Variants_of_Interest_Report = FALSE
+ref_gff = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Reference_Data/PlasmoDB-59_Pfalciparum3D7.gff"
+ref_fasta = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Reference_Data/PlasmoDB-59_Pfalciparum3D7_Genome.fasta"
+reference_alleles = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Reference_Data/drugR_alleles_paulo.csv"
+metadata_file = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Reference_Data/Pfal_mock_metadata_terra_may15_COLOMBIA_PS.csv")
+join_by = "Sample_id"
+Variable1 = "Geo_Level"
+Variable2 = "Temp_Level"
+Longitude = "Longitude"
+Latitude = "Latitude"
+na_hap_rm = TRUE
+na_var_rm = TRUE
+drugs = "Artemisinin,Chloroquine,Pyrimethamine,Sulfadoxine,Lumefantrine,Mefloquine"
+drugs = strsplit(drugs, ',')[[1]]
+include_all_drug_markers = TRUE
+ibd_thres = 0.99
+parallel = TRUE
+ibd_ncol = 4
+pop_levels = NULL
+nTasks = NULL
+selected_checkboxes = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Reference_Data/selected_checkboxes_colombia_PS.csv"
+off_target_formula = "dVSITES_ij>=0.3"
+flanking_INDEL_formula = "flanking_INDEL==TRUE&h_ij>=0.66"
+PCR_errors_formula = "h_ij>=0.66&h_ijminor>=0.66"
+hap_color_palette = "random"
+poly_quantile = 0.75
+pairwise_relatedness_table = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/FULL_SET_pairwise_ibd.csv"
+poly_formula = "NHetLoci>=1&Fws<1"
 
-# fd = "~/Desktop/malaria_MHap/Code/"
-# cigar_paths = NULL
-# cigar_files = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/cigar_dir_reduced")
-# ampseq_jsonfile = NULL
-# ampseq_excelfile = NULL
-# output = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/"
-# sample_id_pattern = "^(Z|K)"
-# markers = file.path("/Users/jar4142/Desktop/Paulo_Reconcile/Paulo_Reconcile_2/markers.csv")
-# min_abd = 10
-# min_ratio = 0.1
-# sample_ampl_rate = 0.75
-# locus_ampl_rate = 0.75
-# PerformanceReport = TRUE
-# Drug_Surveillance_Report= TRUE
-# Variants_of_Interest_Report = TRUE
-# ref_gff = "/Users/jar4142/Desktop/MHap_Drive/reference/Pfal_3D7/PlasmoDB-59_Pfalciparum3D7.gff"
-# ref_fasta = "/Users/jar4142/Desktop/MHap_Drive/reference/Pfal_3D7/PlasmoDB-59_Pfalciparum3D7_Genome.fasta"
-# reference_alleles = "/Users/jar4142/Desktop/Paulo_Reconcile/Paulo_Reconcile_2/drugR_alleles.csv"
-# metadata_file = file.path("/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/Pfal_mock_metadata.csv")
-# join_by = "Sample_id"
-# Variable1 = "Geo_Level"
-# Variable2 = "Temp_Level"
-# Longitude = "Longitude"
-# Latitude = "Latitude"
-# na_hap_rm = TRUE
-# na_var_rm = TRUE
-# drugs = "Artemisinin,Chloroquine,Pyrimethamine,Sulfadoxine,Lumefantrine,Mefloquine"
-# drugs = strsplit(drugs, ',')[[1]]
-# include_all_drug_markers = TRUE
-# ibd_thres = 0.99
-# parallel = TRUE
-# ibd_ncol = 4
-# pop_levels = NULL
-# nTasks = NULL
-# selected_checkboxes = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/selected_checkboxes.csv"
-# off_target_formula = "dVSITES_ij>=0.3"
-# flanking_INDEL_formula = "flanking_INDEL==TRUE&h_ij>=0.66"
-# PCR_errors_formula = "h_ij>=0.66&h_ijminor>=0.66"
-# hap_color_palette = "random"
-# poly_quantile = 0.75
-# pairwise_relatedness_table = "/Users/jar4142/Desktop/MHap_Testing/Colombia_Scenario_2/FULL_SET_pairwise_ibd.csv"
-# poly_formula = "NHetLoci>=1&Fws<1"
-
+if(FALSE){
 # #
 # Defining and checking variables ----
 print("starting to parse variables")
@@ -239,7 +240,7 @@ flanking_INDEL_formula = as.character(args$flanking_INDEL_formula)
 
 # PCR_errors_formula filter
 PCR_errors_formula = as.character(args$PCR_errors_formula)
-
+}
 #Filter
 off_target_formula = gsub('"',"",off_target_formula)
 off_target_formula = gsub('&'," & ",off_target_formula, ignore.case = TRUE)
@@ -366,6 +367,7 @@ PCR_errors_formula = gsub('/'," / ", PCR_errors_formula, ignore.case = TRUE)
 
 print(paste0('PCR_errors_formula: ', PCR_errors_formula))
 
+if(FALSE){
 # sample_ampl_rate
 sample_ampl_rate = as.numeric(args$sample_ampl_rate)
 print(paste0('sample_ampl_rate: ', sample_ampl_rate))
@@ -398,7 +400,7 @@ print(paste0('reference_alleles: ', reference_alleles))
 
 #Obtain data points for plotting
 selected_checkboxes = args$selected_checkboxes
-
+}
 content = readLines(selected_checkboxes)
 positions <- grep("__$", content)
 subnational_level = content[seq(positions[1]+1, positions[2]-1, by = 1)]
@@ -410,7 +412,7 @@ fourcast_ids = content[seq(positions[6]+1, length(content), by = 1)]
 
 print(paste0('gene_names: ', gene_names)) 
 print(paste0('gene_ids: ', gene_ids))
-
+if(FALSE){
 # metadata
 metadata_file = args$metadata
 #metadata_file = if(metadata_file == 'null'){NULL}else{file.path(metadata_file)}
@@ -454,12 +456,12 @@ if(drugs == 'NaN'){
   drugs = strsplit(drugs, ',')[[1]]
 }
 print(paste0('drugs: ', drugs))
-
+}
 var_filter = c(paste(c(Variable1, paste(gsub('\\.', ' ', subnational_level), collapse = ",")), collapse = ";"),
 paste(c(Variable2, paste(period_of_collection, collapse = ",")), collapse =";"))
 
 print(paste0('var_filter: ', var_filter))
-
+if(FALSE){
 include_all_drug_markers = as.logical(args$include_all_drug_markers)
 print(paste0('include_all_drug_markers: ', include_all_drug_markers))
 
@@ -511,7 +513,7 @@ print(paste0('poly_quantile: ', poly_quantile))
 poly_formula = as.character(args$poly_formula)
 
 poly_formula = if(poly_formula == 'null'){NULL}else{as.character(poly_formula)}
-
+}
 if(!is.null(poly_formula)){
   poly_formula = gsub('"',"",poly_formula)
   
@@ -555,10 +557,8 @@ if(!is.null(poly_formula)){
   poly_formula = gsub('/'," / ", poly_formula, ignore.case = TRUE)
 }
 
-
-
 print(paste0('poly_formula: ', poly_formula))
-
+if(FALSE){
 # output pattern
 output = args$output
 print(paste0('output: ', output))
@@ -569,7 +569,7 @@ print(paste0('output: ', output))
 #  ampseq_excelfile = file.path(paste0(output, '.xlsx'))
 #}
 #
-
+}
 print("All variables checked")
 # Check packages and functions----
 print("Loading libraries and functions")
@@ -620,7 +620,7 @@ if(!is.null(cigar_paths)|!is.null(cigar_files)){
  ampseq_object = read_ampseq(file = ampseq_excelfile, format = 'excel')
 
 }
-
+}
 # Cleaning, filtering and adding metadata to the  ampseq_object----
 
 if(PerformanceReport){
@@ -676,6 +676,32 @@ if(PerformanceReport){
     
   }
   
+  sample_performance_summary = sample_performance %>%
+    summarise(AmpRate5 = round(100*sum(AmpRate >= .05)/n(), 1),
+              AmpRate10 = round(100*sum(AmpRate >= .10)/n(), 1),
+              AmpRate15 = round(100*sum(AmpRate >= .15)/n(), 1),
+              AmpRate20 = round(100*sum(AmpRate >= .20)/n(), 1),
+              AmpRate25 = round(100*sum(AmpRate >= .25)/n(), 1),
+              AmpRate30 = round(100*sum(AmpRate >= .30)/n(), 1),
+              AmpRate35 = round(100*sum(AmpRate >= .35)/n(), 1),
+              AmpRate40 = round(100*sum(AmpRate >= .40)/n(), 1),
+              AmpRate45 = round(100*sum(AmpRate >= .45)/n(), 1),
+              AmpRate50 = round(100*sum(AmpRate >= .50)/n(), 1),
+              AmpRate55 = round(100*sum(AmpRate >= .55)/n(), 1),
+              AmpRate60 = round(100*sum(AmpRate >= .60)/n(), 1),
+              AmpRate65 = round(100*sum(AmpRate >= .65)/n(), 1),
+              AmpRate70 = round(100*sum(AmpRate >= .70)/n(), 1),
+              AmpRate75 = round(100*sum(AmpRate >= .75)/n(), 1),
+              AmpRate80 = round(100*sum(AmpRate >= .80)/n(), 1),
+              AmpRate85 = round(100*sum(AmpRate >= .85)/n(), 1),
+              AmpRate90 = round(100*sum(AmpRate >= .90)/n(), 1),
+              AmpRate95 = round(100*sum(AmpRate >= .95)/n(), 1),
+              AmpRate100 = round(100*sum(AmpRate >= 1)/n(), 1),
+              .by = c(Threshold)
+    )
+  
+  amplified_samples = sample_performance_summary[min_abd == sample_performance_summary$Threshold, paste0("AmpRate", sample_ampl_rate*100)]
+  
   plot_precentage_of_samples_over_min_abd = sample_performance %>%
     summarise(AmpRate5 = round(100*sum(AmpRate >= .05)/n(), 1),
               AmpRate10 = round(100*sum(AmpRate >= .10)/n(), 1),
@@ -709,6 +735,51 @@ if(PerformanceReport){
     theme_bw() +
     labs(x = '% of amplified loci (amplification rate)', y = '% of Samples', color = 'Min Coverage')
   
+  plot_precentage_of_samples_over_min_abd_reduced = sample_performance_summary[min_abd == sample_performance_summary$Threshold, ] %>%
+    pivot_longer(cols = paste0('AmpRate', seq(5, 100, 5)),
+                 values_to = 'Percentage',
+                 names_to = 'AmpRate') %>%
+    mutate(AmpRate = as.numeric(gsub('AmpRate','', AmpRate)))%>%
+    ggplot(aes(x = AmpRate, y = Percentage, color = as.factor(Threshold), group = as.factor(Threshold))) +
+    geom_line() +
+    geom_vline(xintercept = 100*sample_ampl_rate, linetype = 2) +
+    theme_bw() +
+    labs(x = '% of amplified loci (amplification rate)', y = '% of Samples', color = 'Min Coverage')
+  
+  #WATERMARKED
+  plot_precentage_of_samples_over_min_abd_AMPLIFICATION = sample_performance %>%
+    summarise(AmpRate5 = round(100*sum(AmpRate >= .05)/n(), 1),
+              AmpRate10 = round(100*sum(AmpRate >= .10)/n(), 1),
+              AmpRate15 = round(100*sum(AmpRate >= .15)/n(), 1),
+              AmpRate20 = round(100*sum(AmpRate >= .20)/n(), 1),
+              AmpRate25 = round(100*sum(AmpRate >= .25)/n(), 1),
+              AmpRate30 = round(100*sum(AmpRate >= .30)/n(), 1),
+              AmpRate35 = round(100*sum(AmpRate >= .35)/n(), 1),
+              AmpRate40 = round(100*sum(AmpRate >= .40)/n(), 1),
+              AmpRate45 = round(100*sum(AmpRate >= .45)/n(), 1),
+              AmpRate50 = round(100*sum(AmpRate >= .50)/n(), 1),
+              AmpRate55 = round(100*sum(AmpRate >= .55)/n(), 1),
+              AmpRate60 = round(100*sum(AmpRate >= .60)/n(), 1),
+              AmpRate65 = round(100*sum(AmpRate >= .65)/n(), 1),
+              AmpRate70 = round(100*sum(AmpRate >= .70)/n(), 1),
+              AmpRate75 = round(100*sum(AmpRate >= .75)/n(), 1),
+              AmpRate80 = round(100*sum(AmpRate >= .80)/n(), 1),
+              AmpRate85 = round(100*sum(AmpRate >= .85)/n(), 1),
+              AmpRate90 = round(100*sum(AmpRate >= .90)/n(), 1),
+              AmpRate95 = round(100*sum(AmpRate >= .95)/n(), 1),
+              AmpRate100 = round(100*sum(AmpRate >= 1)/n(), 1),
+              .by = c(Threshold)
+    ) %>%
+    pivot_longer(cols = paste0('AmpRate', seq(5, 100, 5)),
+                 values_to = 'Percentage',
+                 names_to = 'AmpRate') %>%
+    mutate(AmpRate = as.numeric(gsub('AmpRate','', AmpRate))) %>%
+    ggplot(aes(x = Percentage, y = AmpRate, color = as.factor(Threshold), group = as.factor(Threshold))) +
+    geom_line() +
+    geom_hline(yintercept = 100*sample_ampl_rate, linetype = 2) +
+    theme_bw() +
+    labs(x = '% of Samples', y = '% of amplified loci (amplification rate)', color = 'Min Coverage')
+
   ### Overall sample performance by different coverage per run----
   
   ReadDepth_coverage = get_ReadDepth_coverage(ampseq_object = ampseq_object_abd1, variable = 'Run')
@@ -854,9 +925,21 @@ if(PerformanceReport){
       theme_bw() +
       labs(x = '% of amplified loci (amplification rate)', y = '% of Samples', color = 'Min Coverage')
     
+    
+      data = sample_performance %>% select(1:2) %>% distinct() %>% count(!!sym(names(sample_performance)[2]))
+      
+      samples_by_location = ggplot(data, aes(x = !!sym(names(data)[1]), y = n, fill = !!sym(names(data)[1]))) +
+        geom_bar(stat = "identity", color = "black", width = 0.7) + # Bar colors with spacing
+        labs(x = "Location", y = "Number of Samples") + # Axis labels
+        theme_minimal() + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels if necessary
+              panel.grid.major.x = element_blank(), # Remove vertical grid lines
+              plot.title = element_text(hjust = 0.5)) + 
+        scale_fill_discrete(name = "Location")
   }
 }
 
+if(TRUE){
 ## Identification of off target-products and PCR artifacts----
 
 
@@ -1895,6 +1978,7 @@ if(!is.null(sample_ampl_rate)){
 ## Printing performance report----
 
 print("Entering performance report")
+}
 if(PerformanceReport == TRUE){
   
   all_loci_amplification_rate = ampseq_object@plots$all_loci_amplification_rate
@@ -2065,6 +2149,62 @@ if(Drug_Surveillance_Report){
                                                              drugs = drugs,
                                                              filters = NULL,
                                                              hap_color_palette = hap_color_palette)
+  
+  tmp = drug_resistant_haplotypes_plot$aa_mutations
+  tmp = as.data.frame(tmp)
+  tmp$Sample_Id = row.names(tmp)
+  
+  # Convert to long format
+  long_df <- tmp %>%
+    pivot_longer(
+      cols = -Sample_Id,            # Pivot all columns
+      names_to = "Sample",            # New column for row names
+      values_to = "Marker"            # New column for values
+    )  %>%
+  separate_rows(Marker, sep = " ")
+  
+  # View the resulting long format table
+  #print(long_df)
+  
+  drugR_reference_alleles_tmp = read.csv(reference_alleles)
+  drugR_reference_alleles_tmp$Description <- iconv(drugR_reference_alleles_tmp$Description, from = "latin1", to = "ASCII//TRANSLIT")
+  drugR_reference_alleles_tmp$Description <- gsub("\\^E$", "", drugR_reference_alleles_tmp$Description)
+  print(drugR_reference_alleles_tmp)
+  
+  partial = long_df %>% 
+    left_join(drugR_reference_alleles_tmp, by = c("Marker" = "Mutation")) %>%
+    select(Sample_Id, Sample, Marker, Annotation) %>%
+    filter(!is.na(Annotation)) %>% 
+    select(-Sample_Id) %>%     # Remove the Sample_Id column
+    group_by(Sample, Marker, Annotation) %>% # Group by the relevant columns
+    summarise(Count = n(), .groups = 'drop') %>%  # Count repeated rows and add as a new column
+    relocate(Annotation, .before = Sample) #%>%    # Move the Annotation column to the left
+  #rename(Drug = Annotation) 
+  
+  #TABLE NAMES ADD
+  #Performance plot. Number that went in vs Number that went out. Changing wording.
+  
+  #Drug Phenotype
+  #Locus
+  #Mutation/Marker
+  #Count
+  #Analyzed Samples/Total Samples/ Samples that yield intepretable data.
+  #Circle is the number of interpretable samples.
+  denominator = long_df %>% 
+    left_join(drugR_reference_alleles_tmp, by = c("Marker" = "Mutation")) %>%
+    select(Sample_Id, Sample, Marker, Annotation) %>%
+    select(-Sample_Id) %>%     # Remove the Sample_Id column
+    group_by(Sample) %>% # Group by the relevant columns
+    summarise(Sample_Space = n(), .groups = 'drop') 
+  
+  combined_df <- partial %>%
+    left_join(denominator, by = "Sample")
+  
+  # View the result
+  print(combined_df)
+  
+  partial = as.data.frame(combined_df)
+  colnames(combined_df) = c("Drug phenotype", "Gene", "Allele/Marker", "Count", "Sample Space")
   
   print('Generation of plots and tables for DRS report done')
   imagename = file.path(paste0(output, '_DRS_Report.RData'))

@@ -48,11 +48,6 @@ category of Variable1 and Variable2.
 > to refer to the unique combination of alleles across loci in a gene
 > for which we will calculate a population frequency.
 
-In the cigar format the variant positions are based on the location of
-the mutation in the amplified region and not the position in the coding
-sequence, so this format does not directly indicate the consequences of
-the mutation in terms of amino acid change.
-
 The workflow identifies the location of the mutations in the coding
 sequence, and based on that translates the base pair changes into amino
 acid changes. The annotation of the nucleotide and amino acid changes is
