@@ -33,7 +33,7 @@ RUN mamba config \
     unzip=6.0 \
     -c conda-forge -c bioconda && \
     mamba clean --all -f -y && \
-    echo "source activate layout_env" > ~/.bashrc
+    echo "conda activate layout_env" > ~/.bashrc
 
 ENV PATH /opt/conda/envs/layout_env/bin:$PATH
 ENV PATH /opt/conda/envs/layout_env/bin/python:$PATH
