@@ -6022,11 +6022,9 @@ drug_resistant_haplotypes = function(ampseq_object,
     
     
     print("Transforming data to spatial points")
-    print(drug_phenotype_summary_sdf)
     drug_phenotype_summary_sdf = SpatialPointsDataFrame(coords = drug_phenotype_summary_sdf[,c("Longitude", "Latitude")],
                                                         data = drug_phenotype_summary_sdf,
                                                         proj4string = CRS("EPSG:4326"))
-    
     
     tmap_mode('view')
     print('i_drug_map')
