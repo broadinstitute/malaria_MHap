@@ -1,5 +1,5 @@
 #!/bin/r env
-
+Sys.setenv(PROJ_LIB = "/opt/conda/envs/layout_env/share/proj")
 library(argparse)
 library(stringr)
 library(rmarkdown)
