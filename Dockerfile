@@ -6,7 +6,7 @@ RUN mamba config \
     --add channels conda-forge && \
     mamba create -n layout_env python=3.11.0 -y && \
     mamba install -n layout_env \
-    r-base=4.2.3 \
+    r-base=4.3 \
     r-ade4=1.7_22 \
     r-dplyr=1.1.4 \
     r-magrittr=2.0.3 \
@@ -21,12 +21,13 @@ RUN mamba config \
     r-domc=1.3.8 \
     r-svmisc=1.2.3 \
     r-biocmanager=1.30.22 \
-    bioconductor-biostrings=2.66.0 \
+    bioconductor-biostrings=2.70.1 \
     r-dt=0.32 \
     r-stringr=1.5.0 \
     r-tmap=3.3_4 \
     r-sp=2.1_3 \
     r-argparse=2.2.2 \
+    r-xlconnect=1.0.10 \
     r-igraph=2.0.2 \
     unzip=6.0 \
     -c conda-forge -c bioconda && \
