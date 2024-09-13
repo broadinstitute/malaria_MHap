@@ -29,6 +29,7 @@ RUN mamba config \
     r-argparse=2.2.2 \
     r-xlconnect=1.0.10 \
     r-igraph=2.0.2 \
+    r-xlconnect=1.0.10 \
     unzip=6.0 \
     -c conda-forge -c bioconda && \
     mamba clean --all -f -y && \
