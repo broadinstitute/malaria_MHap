@@ -47,7 +47,7 @@ print(paste0(amplified_samples, "% of samples pass the amplification filter."))
 ## Genotype Frequency
 
 ```{r, fig.cap = "**Table 1:** Summary of resistance markers and their prevalence among samples that yielded usable data. The Annotation column specifies the drug for which the associated marker confers resistance. The Gene column indicates the gene in which the marker is identified. Count indicates the number of times the resistance markers were detected among the sample that yielded usable data. Samples_Genotyped provides the total number of samples in which the gene was successfully amplified, serving as the denominator for calculating marker prevalence. For some genes, resistance may be the results of mutations in several positions, which may not be validated."}
-partial %>%
+minimal_aa_table %>%
   DT::datatable(extensions = 'Buttons',
                 options = list(dom = 'Blfrtip',
                                buttons = c('csv', 'excel')))

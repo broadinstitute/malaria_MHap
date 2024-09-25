@@ -1,5 +1,5 @@
 #!/bin/r env
-
+Sys.setenv(PROJ_LIB = "/opt/conda/envs/layout_env/share/proj")
 library(argparse)
 library(stringr)
 library(rmarkdown)
@@ -126,17 +126,6 @@ parser$add_argument("-na_hap_rm", "--na_hap_rm", default = FALSE,
 
 # Parameters for IBD and Conectivity report
 
-## UGER parameters for IBD calculation using task arrays
-### Only "nTasks must be defined in the json file, the other two parameters are defined automatically
-
-parser$add_argument("-t", "--nTasks", default = 1,
-                    help="Number of Tasks arrays to split the estimation of IBD using tasks arrays in UGER")
-
-parser$add_argument("-tid", "--Task_id", default = 'null',
-                    help="Tasks array ID defined by UGER")
-
-parser$add_argument("-ibd_step", "--ibd_step", default = 'null',
-                    help="Step of the estimation of IBD, ")
 
 ## Other parameters for IBD
 
@@ -418,37 +407,42 @@ print(paste0('poly_formula: ', poly_formula))
 
 ref_gff = args$ref_gff
 ref_gff = if(ref_gff == 'null'){NULL}else{
-  # file.path(rd, ref_gff)
-  ref_gff
+  if(tolower(code_environment) == 'local'){
+    file.path(rd, ref_gff)  
+  }else{
+    ref_gff 
+  }
   }
 print(paste0('ref_gff: ', ref_gff))
 
 ref_fasta = args$ref_fasta
 ref_fasta = if(ref_fasta == 'null'){NULL}else{
-  # file.path(rd, ref_fasta)
-  ref_fasta
+  if(tolower(code_environment) == 'local'){
+   file.path(rd, ref_fasta)}else{
+    ref_fasta
+   }
   }
 print(paste0('ref_fasta: ', ref_fasta))
 
 amplicon_fasta = args$amplicon_fasta
 amplicon_fasta = if(amplicon_fasta == 'null'){NULL}else{
-  # file.path(rd, amplicon_fasta)
-  amplicon_fasta
+  if(tolower(code_environment) == 'local'){
+   file.path(rd, amplicon_fasta)
+  }else{amplicon_fasta}
   }
 print(paste0('amplicon_fasta: ', amplicon_fasta))
 
 reference_alleles = args$reference_alleles
 reference_alleles = if(reference_alleles == 'null'){NULL}else{
-  # file.path(rd, reference_alleles)
-  reference_alleles
+  if(tolower(code_environment) == 'local'){
+   file.path(rd, reference_alleles)
+    }else{
+      reference_alleles}
   }
 print(paste0('reference_alleles: ', reference_alleles))
 
 hap_color_palette = args$hap_color_palette
 print(paste0('hap_color_palette: ', hap_color_palette))
-
-
-
 
 
 # gene_names
@@ -531,7 +525,11 @@ ibd_ncol = as.integer(args$ibd_ncol)
 print(paste0('ibd_ncol: ', ibd_ncol))
 
 # pop_levels
-pop_levels = as.integer(args$pop_levels)
+pop_levels = args$pop_levels
+pop_levels = if(pop_levels == 'null'){
+  NULL
+}else{
+  as.character(pop_levels)}
 print(paste0('pop_levels: ', pop_levels))
 
 ### Parameters for COI report----
@@ -1144,63 +1142,72 @@ if(Drug_Surveillance_Report){
                                                              filters = NULL,
                                                              hap_color_palette = hap_color_palette)
   
+  minimal_aa_table = drug_resistant_haplotypes_plot$minimal_aa_table
+  
   # Outputs for minimal report
-  tmp = drug_resistant_haplotypes_plot$aa_mutations
-  tmp = as.data.frame(tmp)
-  tmp$Sample_Id = row.names(tmp)
-  
-  # Convert to long format
-  long_df <- tmp %>%
-    pivot_longer(
-      cols = -Sample_Id,            # Pivot all columns
-      names_to = "Sample",            # New column for row names
-      values_to = "Marker"            # New column for values
-    )  %>%
-    separate_rows(Marker, sep = " ")
-  
-  # View the resulting long format table
-  #print(long_df)
-  
-  drugR_reference_alleles_tmp = read.csv(reference_alleles)
-  drugR_reference_alleles_tmp$Description <- iconv(drugR_reference_alleles_tmp$Description, from = "latin1", to = "ASCII//TRANSLIT")
-  drugR_reference_alleles_tmp$Description <- gsub("\\^E$", "", drugR_reference_alleles_tmp$Description)
-  print(drugR_reference_alleles_tmp)
-  
-  partial = long_df %>% 
-    left_join(drugR_reference_alleles_tmp, by = c("Marker" = "Mutation")) %>%
-    select(Sample_Id, Sample, Marker, Annotation) %>%
-    filter(!is.na(Annotation)) %>% 
-    select(-Sample_Id) %>%     # Remove the Sample_Id column
-    group_by(Sample, Marker, Annotation) %>% # Group by the relevant columns
-    summarise(Count = n(), .groups = 'drop') %>%  # Count repeated rows and add as a new column
-    relocate(Annotation, .before = Sample) #%>%    # Move the Annotation column to the left
-  #rename(Drug = Annotation) 
-  
-  #TABLE NAMES ADD
-  #Performance plot. Number that went in vs Number that went out. Changing wording.
-  
-  #Drug Phenotype
-  #Locus
-  #Mutation/Marker
-  #Count
-  #Analyzed Samples/Total Samples/ Samples that yield intepretable data.
-  #Circle is the number of interpretable samples.
-  denominator = long_df %>% 
-    left_join(drugR_reference_alleles_tmp, by = c("Marker" = "Mutation")) %>%
-    select(Sample_Id, Sample, Marker, Annotation) %>%
-    select(-Sample_Id) %>%     # Remove the Sample_Id column
-    group_by(Sample) %>% # Group by the relevant columns
-    summarise(Sample_Space = n(), .groups = 'drop') 
-  
-  combined_df <- partial %>%
-    left_join(denominator, by = "Sample")
-  
-  # View the result
-  print(combined_df)
-  
-  partial = as.data.frame(combined_df)
-  colnames(partial) = c("Resistance Association of gene", "Gene", "Marker", "Count", "Samples Genotyped")
-  
+  # tmp = drug_resistant_haplotypes_plot$aa_mutations
+  # tmp = as.data.frame(tmp)
+  # tmp$Sample_Id = row.names(tmp)
+  # 
+  # 
+  # 
+  # View(drug_resistant_haplotypes_plot$genotype_phenotype_table)
+  # 
+  # View(drug_resistant_haplotypes_plot$haplotype_freq_barplot$data)
+  # View(drug_resistant_haplotypes_plot$drug_phenotype_barplot$data)
+  # 
+  # # Convert to long format
+  # long_df <- tmp %>%
+  #   pivot_longer(
+  #     cols = -Sample_Id,            # Pivot all columns
+  #     names_to = "Sample",            # New column for row names
+  #     values_to = "Marker"            # New column for values
+  #   )  %>%
+  #   separate_rows(Marker, sep = " ")
+  # 
+  # # View the resulting long format table
+  # #print(long_df)
+  # 
+  # drugR_reference_alleles_tmp = read.csv(reference_alleles)
+  # drugR_reference_alleles_tmp$Description <- iconv(drugR_reference_alleles_tmp$Description, from = "latin1", to = "ASCII//TRANSLIT")
+  # drugR_reference_alleles_tmp$Description <- gsub("\\^E$", "", drugR_reference_alleles_tmp$Description)
+  # print(drugR_reference_alleles_tmp)
+  # 
+  # partial = long_df %>% 
+  #   left_join(drugR_reference_alleles_tmp, by = c("Marker" = "Mutation")) %>%
+  #   select(Sample_Id, Sample, Marker, Annotation) %>%
+  #   filter(!is.na(Annotation)) %>% 
+  #   select(-Sample_Id) %>%     # Remove the Sample_Id column
+  #   group_by(Sample, Marker, Annotation) %>% # Group by the relevant columns
+  #   summarise(Count = n(), .groups = 'drop') %>%  # Count repeated rows and add as a new column
+  #   relocate(Annotation, .before = Sample) #%>%    # Move the Annotation column to the left
+  # #rename(Drug = Annotation) 
+  # 
+  # #TABLE NAMES ADD
+  # #Performance plot. Number that went in vs Number that went out. Changing wording.
+  # 
+  # #Drug Phenotype
+  # #Locus
+  # #Mutation/Marker
+  # #Count
+  # #Analyzed Samples/Total Samples/ Samples that yield intepretable data.
+  # #Circle is the number of interpretable samples.
+  # denominator = long_df %>% 
+  #   left_join(drugR_reference_alleles_tmp, by = c("Marker" = "Mutation")) %>%
+  #   select(Sample_Id, Sample, Marker, Annotation) %>%
+  #   select(-Sample_Id) %>%     # Remove the Sample_Id column
+  #   group_by(Sample) %>% # Group by the relevant columns
+  #   summarise(Sample_Space = n(), .groups = 'drop') 
+  # 
+  # combined_df <- partial %>%
+  #   left_join(denominator, by = "Sample")
+  # 
+  # # View the result
+  # print(combined_df)
+  # 
+  # partial = as.data.frame(combined_df)
+  # colnames(partial) = c("Resistance Association of gene", "Gene", "Marker", "Count", "Samples Genotyped")
+  # 
   
   print('Generation of plots and tables for DRS report done')
   
@@ -1214,7 +1221,7 @@ if(Drug_Surveillance_Report){
       'sample_ampl_rate',
       'min_abd',
       'amplified_samples',
-      'partial'))
+      'minimal_aa_table'))
   
     # Full report
     system(paste0('cp ', file.path(fd, 'MHap_Analysis_DRS_Report_Template.Rmd'), ' ', file.path(wd, paste0(output, '_DRS_Report.Rmd'))))
@@ -1239,7 +1246,7 @@ if(Drug_Surveillance_Report){
                                     'sample_ampl_rate',
                                     'min_abd',
                                     'amplified_samples',
-                                    'partial'))
+                                    'minimal_aa_table'))
     
     # Full report
     system(paste0('cp ', file.path(fd, 'MHap_Analysis_DRS_Report_Template.Rmd'), ' ', paste0(output, '_DRS_Report.Rmd')))

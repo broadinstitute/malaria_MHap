@@ -560,24 +560,24 @@ cigar2ampseq = function(cigar_object, min_abd = 1, min_ratio = .1, markers = NUL
         names(alleles) <- colnames(cigar_table)[grepl(paste0("^",locus,',|\\.)'), colnames(cigar_table))]
       }
       
-      if(length(alleles[which(alleles > min_abd)]) == 1){
+      if(length(alleles[which(alleles >= min_abd)]) == 1){
         
         if(!is.null(markers_pattern)){
-          ampseq_loci_abd_table[sample, locus] = paste(gsub(locus,'',names(alleles[which(alleles > min_abd)]), ","), alleles[which(alleles > min_abd)], sep = ":")
+          ampseq_loci_abd_table[sample, locus] = paste(gsub(locus,'',names(alleles[which(alleles >= min_abd)]), ","), alleles[which(alleles >= min_abd)], sep = ":")
         }else{
-          ampseq_loci_abd_table[sample, locus] = paste(gsub(paste0(locus, '.'), '', names(alleles[which(alleles > min_abd)]), ","), alleles[which(alleles > min_abd)], sep = ":")
+          ampseq_loci_abd_table[sample, locus] = paste(gsub(paste0(locus, '.'), '', names(alleles[which(alleles >= min_abd)]), ","), alleles[which(alleles >= min_abd)], sep = ":")
         }
         
-      }else if(length(alleles[which(alleles > min_abd)]) > 1){
+      }else if(length(alleles[which(alleles >= min_abd)]) > 1){
         allele_names = names(alleles)
         alleles = as.integer(alleles)
         names(alleles) = allele_names
         alleles = sort(alleles, decreasing = T)
         
         if(!is.null(markers_pattern)){
-          ampseq_loci_abd_table[sample, locus] = gsub(locus, "", paste(paste(names(alleles[alleles/max(alleles) > min_ratio]), alleles[alleles/max(alleles) > min_ratio], sep = ":"), collapse = "_"))  
+          ampseq_loci_abd_table[sample, locus] = gsub(locus, "", paste(paste(names(alleles[alleles/max(alleles) >= min_ratio]), alleles[alleles/max(alleles) >= min_ratio], sep = ":"), collapse = "_"))  
         }else{
-          ampseq_loci_abd_table[sample, locus] = gsub(paste0(locus, "."), "", paste(paste(names(alleles[alleles/max(alleles) > min_ratio]), alleles[alleles/max(alleles) > min_ratio], sep = ":"), collapse = "_"))  
+          ampseq_loci_abd_table[sample, locus] = gsub(paste0(locus, "."), "", paste(paste(names(alleles[alleles/max(alleles) >= min_ratio]), alleles[alleles/max(alleles) >= min_ratio], sep = ":"), collapse = "_"))  
         }
         
       }
@@ -2903,39 +2903,45 @@ locus_amplification_rate = function(ampseq_object, threshold = .65, update_loci 
     }else if((is.null(strata) | !based_on_strata)){
       
       discarded_loci = loci_performance[loci_performance[["loci_ampl_rate_Total"]] <= threshold,][["loci"]]
-      keeped_loci = loci_performance[loci_performance[["loci_ampl_rate_Total"]] > threshold,][["loci"]]
       
-      ampseq_loci_abd_table_discarded_loci =
-        ampseq_loci_abd_table[, colnames(ampseq_loci_abd_table) %in% discarded_loci]
-      ampseq_loci_abd_table = 
-        ampseq_loci_abd_table[, colnames(ampseq_loci_abd_table) %in% keeped_loci]
-      
-      markers = ampseq_object@markers
-      
-      discarded_markers = markers[markers[['amplicon']] %in% discarded_loci,]
-      markers = markers[markers[['amplicon']] %in% keeped_loci,]
-      
-      markers[["distance"]] = Inf
-      
-      for(chromosome in levels(as.factor(markers[["chromosome"]]))){
-        for(amplicon in 1:(nrow(markers[markers[["chromosome"]] == chromosome,])-1)){
-          markers[
-            markers[["chromosome"]] == chromosome,
-          ][amplicon, "distance"] = 
-            markers[markers[["chromosome"]] == chromosome,][amplicon + 1, "pos"] - 
-            markers[markers[["chromosome"]] == chromosome,][amplicon, "pos"]
+      if(length(discarded_loci) > 0){
+        
+        keeped_loci = loci_performance[loci_performance[["loci_ampl_rate_Total"]] > threshold,][["loci"]]
+        
+        ampseq_loci_abd_table_discarded_loci =
+          ampseq_loci_abd_table[, colnames(ampseq_loci_abd_table) %in% discarded_loci]
+        ampseq_loci_abd_table = 
+          ampseq_loci_abd_table[, colnames(ampseq_loci_abd_table) %in% keeped_loci]
+        
+        markers = ampseq_object@markers
+        
+        discarded_markers = markers[markers[['amplicon']] %in% discarded_loci,]
+        markers = markers[markers[['amplicon']] %in% keeped_loci,]
+        
+        markers[["distance"]] = Inf
+        
+        for(chromosome in levels(as.factor(markers[["chromosome"]]))){
+          for(amplicon in 1:(nrow(markers[markers[["chromosome"]] == chromosome,])-1)){
+            markers[
+              markers[["chromosome"]] == chromosome,
+            ][amplicon, "distance"] = 
+              markers[markers[["chromosome"]] == chromosome,][amplicon + 1, "pos"] - 
+              markers[markers[["chromosome"]] == chromosome,][amplicon, "pos"]
+          }
         }
+        
+        loci_performance_complete = loci_performance
+        loci_performance = loci_performance[keeped_loci,]
+        
+        ampseq_object@gt = ampseq_loci_abd_table
+        ampseq_object@markers = markers
+        ampseq_object@loci_performance = loci_performance
+        ampseq_object@discarded_loci = list(gt = ampseq_loci_abd_table_discarded_loci,
+                                            loci_performance = loci_performance_complete,
+                                            markers = discarded_markers)
+        
       }
       
-      loci_performance_complete = loci_performance
-      loci_performance = loci_performance[keeped_loci,]
-      
-      ampseq_object@gt = ampseq_loci_abd_table
-      ampseq_object@markers = markers
-      ampseq_object@loci_performance = loci_performance
-      ampseq_object@discarded_loci = list(gt = ampseq_loci_abd_table_discarded_loci,
-                                          loci_performance = loci_performance_complete,
-                                          markers = discarded_markers)
       ampseq_object@plots[["all_loci_amplification_rate"]] = all_loci_performance_plot
       #ampseq_object@plots[["amplification_rate_per_locus"]] = amplification_rate_per_locus
       return(ampseq_object)
@@ -2948,7 +2954,6 @@ locus_amplification_rate = function(ampseq_object, threshold = .65, update_loci 
     return(all_loci_performance_plot)
     
   }
-  
   
   
 }
@@ -2993,14 +2998,31 @@ sample_amplification_rate = function(ampseq_object, threshold = .8, update_sampl
     
   }
   
-  if(update_samples){
+  if(update_samples & sum(metadata[["sample_ampl_rate"]] <= threshold) > 0){
     
-    ampseq_loci_abd_table_discarded_samples = ampseq_loci_abd_table[!(rownames(ampseq_loci_abd_table) %in% metadata[metadata[["sample_ampl_rate"]] > threshold ,][["Sample_id"]]),]
-    ampseq_loci_abd_table = ampseq_loci_abd_table[rownames(ampseq_loci_abd_table) %in% metadata[metadata[["sample_ampl_rate"]] > threshold ,][["Sample_id"]],]
+    name_of_discarded_samples = rownames(ampseq_loci_abd_table)[rownames(ampseq_loci_abd_table) %in% metadata[metadata[["sample_ampl_rate"]] <= threshold ,][["Sample_id"]]]
+    number_of_discarded_samples = length(name_of_discarded_samples)
     
+    name_of_kept_samples = rownames(ampseq_loci_abd_table)[rownames(ampseq_loci_abd_table) %in% metadata[metadata[["sample_ampl_rate"]] > threshold ,][["Sample_id"]]]
+    number_of_kept_samples = length(name_of_kept_samples)
+    
+    ampseq_loci_abd_table_discarded_samples = matrix(ampseq_loci_abd_table[name_of_discarded_samples,], 
+                                                     nrow = number_of_discarded_samples, 
+                                                     ncol = ncol(ampseq_loci_abd_table),
+                                                     dimnames = list(name_of_discarded_samples,
+                                                                     colnames(ampseq_loci_abd_table)))
+    print("Printing ampseq_loci_abd_table_discarded_samples...")
+    print(name_of_discarded_samples)
+    ampseq_loci_abd_table = matrix(ampseq_loci_abd_table[name_of_kept_samples,],
+                                   nrow = number_of_kept_samples,
+                                   ncol = ncol(ampseq_loci_abd_table),
+                                   dimnames = list(name_of_kept_samples,
+                                                   colnames(ampseq_loci_abd_table)))
+    print("Printing ampseq_loci_abd_table...")
+    print(rownames(ampseq_loci_abd_table))
     metadata_complete = metadata
     metadata = metadata[metadata[["sample_ampl_rate"]] > threshold ,]
-    
+    metadata_discarded = metadata_complete[metadata_complete[["sample_ampl_rate"]] <= threshold ,]
     
     # loci_performance[["loci_ampl_rate2"]] = apply(ampseq_loci_abd_table, 2, function(x) 1- sum(is.na(x))/length(x))
     # 
@@ -3019,7 +3041,15 @@ sample_amplification_rate = function(ampseq_object, threshold = .8, update_sampl
     # ampseq_object@loci_performance = loci_performance
     
     ampseq_object@discarded_samples = list(gt = ampseq_loci_abd_table_discarded_samples,
-                                           metadata = metadata_complete)
+                                           metadata = metadata_discarded)
+    
+    # ampseq_object@plots[["loci_amplification_rate"]] = loci_performance_plot
+    ampseq_object@plots[["samples_amplification_rate"]] = all_samples_performance_plot
+    
+    return(ampseq_object)
+    
+  }else if(update_samples & sum(metadata[["sample_ampl_rate"]] > threshold) > 0){
+    
     
     # ampseq_object@plots[["loci_amplification_rate"]] = loci_performance_plot
     ampseq_object@plots[["samples_amplification_rate"]] = all_samples_performance_plot
@@ -3460,6 +3490,7 @@ setMethod("get_ASVs_attributes", signature(obj = "ampseq"),
 ## Functions for DRS and other variants of interest----
 ### haplotypes_respect_to_reference----
 
+
 haplotypes_respect_to_reference = function(ampseq_object,
                                            gene_names = c('PfDHFR',
                                                           'PfMDR1',
@@ -3490,7 +3521,7 @@ haplotypes_respect_to_reference = function(ampseq_object,
   markers = ampseq_object@markers
   
   ## Filter Drug resistant markers---
-  
+  print("Filtering drug resistant markers...")
   if('gene_id' %in% colnames(markers)){
     markers_of_interest = markers[grep(paste(gene_ids, collapse = "|"), markers$gene_id),]
   }else{
@@ -3502,14 +3533,7 @@ haplotypes_respect_to_reference = function(ampseq_object,
     gene_names = gene_ids
   }
   
-  ### Rename gene common name to gene_ID---
   
-  # markers_of_interest[['gene_ids']] = NA
-  # 
-  # for(gene in 1:length(gene_names)){
-  #   markers_of_interest[grepl(gene_names[gene], markers_of_interest[['amplicon']]),][['gene_ids']] = gene_ids[gene]
-  # }
-  # 
   # Calculates the start and end position of each drugR marker on the CDS of each gene---
   
   ## Start and end position in 3D7 CDSs---
@@ -3517,7 +3541,12 @@ haplotypes_respect_to_reference = function(ampseq_object,
   markers_of_interest[['end_cds']] = NA
   markers_of_interest[['strand']] = NA
   markers_of_interest[['ref_length']] = NA
+  markers_of_interest[['upstream_no_cds_pos']] = NA
+  markers_of_interest[['downstream_no_cds_pos']] = NA
+  markers_of_interest[['intronic_pos']] = NA
+  markers_of_interest[['length']] = markers_of_interest[['end']] - markers_of_interest[['start']] + 1
   
+  print("Analyzing each amplicon in drug resistance markers...")
   for(amplicon in markers_of_interest$amplicon){ # for each drugR marker
     
     # Gene where the drugR marker is located
@@ -3528,52 +3557,164 @@ haplotypes_respect_to_reference = function(ampseq_object,
                                reference_gff$type == 'CDS',]
     
     # start counting from 0 taking into account the CDSs (exons) where the drugR marker is located
-    start_cds = 0
+    start_cds_pos = 0
     
     # check how many CDSs does the gene have
     if(nrow(temp_gff) > 1){ # if the gene has 2 or more CDSs then
+      # Identify on which CDS(s) the start position of the drugR marker is located
+      cds_start = which(temp_gff$start < markers_of_interest[markers_of_interest$amplicon== amplicon,]$start &
+                          temp_gff$end > markers_of_interest[markers_of_interest$amplicon== amplicon,]$start)
       
-      # Identify on which CDS the drugR marker is located
-      cds = which(temp_gff$start < markers_of_interest[markers_of_interest$amplicon== amplicon,]$start &
-                    temp_gff$end > markers_of_interest[markers_of_interest$amplicon== amplicon,]$start)
+      # Identify on which CDS(s) the end position of the drugR marker is located
+      cds_end = which(temp_gff$start < markers_of_interest[markers_of_interest$amplicon== amplicon,]$end &
+                        temp_gff$end > markers_of_interest[markers_of_interest$amplicon== amplicon,]$end)
       
-      if(cds > 1){ # if the drugR marker is located in CDS 2 or above then
+      if(length(cds_start) == 0 & length(cds_end) > 0){# if 5' for the amplicon is outside of the exon
+        for(pre_cds in 1:(cds_end - 1)){ # sum the length of all previous CDSs
+          start_cds_pos = start_cds_pos + 
+            temp_gff[pre_cds,][['end']] - temp_gff[pre_cds,][['start']] + 1 # length of each previous CDS
+        }
         
-        for(pre_cds in 1:(cds - 1)){ # sum the length of all previous CDSs
-          start_cds = start_cds + temp_gff[pre_cds,][['end']] - temp_gff[pre_cds,][['start']] + 1
+        # Starting position of the amplicon in the CDS
+        
+        start_cds_pos = start_cds_pos + 1
+        
+        # upstream nucleotides located in no CDS regions
+        
+        upstream_no_cds_pos = abs(markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds_end,][['start']])
+        
+        # end position of the amplicon in the CDS
+        
+        end_cds = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$end - temp_gff[cds_end,][['start']]
+        
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds_pos
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['end_cds']] = end_cds
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds_end,][['strand']])
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['upstream_no_cds_pos']] = upstream_no_cds_pos
+        
+      }else if(length(cds_start) > 0 & length(cds_end) == 0){# if 3' for the amplicon is outside of the exon
+        for(pre_cds in 1:(cds_start - 1)){ # sum the length of all previous CDSs
+          start_cds_pos = start_cds_pos + 
+            temp_gff[pre_cds,][['end']] - temp_gff[pre_cds,][['start']] + 1 # length of each previous CDS
+        }
+        
+        # Starting position of the amplicon in the CDS
+        
+        start_cds_pos = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds_start,][['start']] + 1
+        
+        # end position of the amplicon in the CDS
+        
+        end_cds = start_cds_pos + temp_gff[cds_start,][['end']] - markers_of_interest[markers_of_interest$amplicon== amplicon,]$start 
+        
+        # upstream nucleotides located in no CDS regions
+        
+        downstream_no_cds_pos = temp_gff[cds_start,][['end']] - markers_of_interest[markers_of_interest$amplicon== amplicon,]$start + 1 + 1
+        
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds_pos
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['end_cds']] = end_cds
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds_start,][['strand']])
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['downstream_no_cds_pos']] = downstream_no_cds_pos
+        
+      }else if(cds_start != cds_end & length(cds_end) != 0 & length(cds_end) != 0){ # if start and end are in different cds        
+        for(pre_cds in 1:(cds_start - 1)){ # sum the length of all previous CDSs
+          start_cds_pos = start_cds_pos + 
+            temp_gff[pre_cds,][['end']] - temp_gff[pre_cds,][['start']] + 1 # length of each previous CDS
+        }
+        
+        # Starting position of the amplicon in the CDS
+        
+        start_cds_pos = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds_start,][['start']] + 1
+        
+        # end position of the amplicon in the CDS
+        
+        end_cds = 0
+        
+        for(pre_cds in 1:(cds_end - 1)){ # sum the length of all previous CDSs
+          end_cds = end_cds + 
+            temp_gff[pre_cds,][['end']] - temp_gff[pre_cds,][['start']] + 1 # length of each previous CDS
+        }
+        
+        end_cds = end_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$end - temp_gff[cds_end,][['start']] + 1
+        
+        # end_cds = start_cds_pos +  
+        #   temp_gff[cds_start,][['end']] - markers_of_interest[markers_of_interest$amplicon== amplicon,]$start + # Remaining nucleotides in the exon where start position is located
+        #   markers_of_interest[markers_of_interest$amplicon== amplicon,]$end - temp_gff[cds_end,][['start']] + 1 # nucleotides in the exon where end position is located
+        
+        if(cds_end - cds_start > 1){
+          print("cds_end - cds_start > 1")
+          
+          intronic_pos = NULL
+          
+          for(internal_cds in (cds_start + 1):(cds_end - 1)){
+            end_cds = end_cds + 
+              temp_gff[internal_cds,][['end']] - temp_gff[internal_cds,][['start']] + 1
+            
+            first_intronic_pos_in_amplicon = temp_gff[cds_start,][['end']] - markers_of_interest[markers_of_interest$amplicon == amplicon,]$start + 1 + 1
+            last_intronic_pos_in_amplicon = first_intronic_pos_in_amplicon + temp_gff[cds_end,][['start']] - temp_gff[cds_start,][['end']] - 1 - 1
+            
+            temp_intronic_pos = paste(first_intronic_pos_in_amplicon,
+                                 last_intronic_pos_in_amplicon,
+                                 sep = ',')
+            
+            if(internal_cds > cds_start + 1){
+              intronic_pos = temp_intronic_pos
+            }else{
+              intronic_pos = paste(intronic_pos, temp_intronic_pos, sep = ';')
+            }
+            
+          }
+          
+        }else{
+          
+          first_intronic_pos_in_amplicon = temp_gff[cds_start,][['end']] - markers_of_interest[markers_of_interest$amplicon == amplicon,]$start + 1 + 1
+          last_intronic_pos_in_amplicon = first_intronic_pos_in_amplicon + temp_gff[cds_end,][['start']] - temp_gff[cds_start,][['end']] - 1 - 1
+          
+          intronic_pos = paste(first_intronic_pos_in_amplicon,
+                               last_intronic_pos_in_amplicon,
+                               sep = ',')
+          
+        }
+        
+        # upstream nucleotides located in no CDS regions
+        
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds_pos
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['end_cds']] = end_cds
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds_start,][['strand']])
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['intronic_pos']] = intronic_pos
+        
+      }else if(cds_start == cds_end & cds_start > 1){ # if the drugR marker is located in CDS 2 or above then
+        
+        for(pre_cds in 1:(cds_start - 1)){ # sum the length of all previous CDSs
+          start_cds_pos = start_cds_pos + temp_gff[pre_cds,][['end']] - temp_gff[pre_cds,][['start']] + 1
         }
         
         # sum the position on the located CDS
-        start_cds = start_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds,][['start']] + 1
-        end_cds = start_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$length - 1
+        start_cds_pos = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds_start,][['start']] + 1
+        end_cds = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$length - 1
         
-        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds_pos
         markers_of_interest[markers_of_interest$amplicon== amplicon,][['end_cds']] = end_cds
-        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds,][['strand']])
-        
-        
-      }else{ # if the drugR marker is located in CDS 1
-        
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds_start,][['strand']])
+      }else if(cds_start == cds_end & cds_start == 1){ # if the drugR marker is located in CDS 1
         # Take the position on the located CDS
         
-        start_cds = start_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds,][['start']] + 1
-        end_cds = start_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$length - 1
+        start_cds_pos = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[cds_start,][['start']] + 1
+        end_cds = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$length - 1
         
-        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds_pos
         markers_of_interest[markers_of_interest$amplicon== amplicon,][['end_cds']] = end_cds
-        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds,][['strand']])
+        markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[cds_start,][['strand']])
         
       }
+      
     }else{# if the gene has 1 CDS then
-      
       # Take the position on the CDS 1
-      start_cds = start_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[['start']] + 1
-      end_cds = start_cds + markers_of_interest[markers_of_interest$amplicon== amplicon,]$length - 1
+      start_cds_pos = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$start - temp_gff[['start']] + 1
+      end_cds = start_cds_pos + markers_of_interest[markers_of_interest$amplicon== amplicon,]$length - 1
       
-      markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds
+      markers_of_interest[markers_of_interest$amplicon== amplicon,][['start_cds']] = start_cds_pos
       markers_of_interest[markers_of_interest$amplicon== amplicon,][['end_cds']] = end_cds
       markers_of_interest[markers_of_interest$amplicon== amplicon,][['strand']] = as.character(temp_gff[['strand']])
-      
     }
   }
   
@@ -3584,8 +3725,7 @@ haplotypes_respect_to_reference = function(ampseq_object,
   # Reference sequences from 3D7---
   ref_seqs = NULL
   
-  for(gene in unique(markers_of_interest$gene_id)){
-    
+  for(gene in unique(markers_of_interest$gene_id)){    
     temp_gff = reference_gff[grepl(gene, reference_gff$attributes, ignore.case = T)&
                                reference_gff$type == 'CDS',]
     
@@ -3604,15 +3744,13 @@ haplotypes_respect_to_reference = function(ampseq_object,
     }else{
       temp_refseq = subseq(reference_genome[grep(temp_gff[['seqid']], names(reference_genome))],
                            start = temp_gff[['start']],
-                           end = temp_gff[['end']])
-      
+                           end = temp_gff[['end']])      
       ref_seqs = c(ref_seqs, as.character(temp_refseq))
     }
-    
-    markers_of_interest[markers_of_interest$gene_id == gene,'ref_length'] = nchar(temp_refseq)
-    
+   markers_of_interest[markers_of_interest$gene_id == gene,'ref_length'] = nchar(temp_refseq) 
   }
   
+  print("Generating the reference sequences")
   names(ref_seqs) = unique(markers_of_interest$gene_id)
   ref_seqs = DNAStringSet(ref_seqs)
   
@@ -3621,6 +3759,7 @@ haplotypes_respect_to_reference = function(ampseq_object,
   
   ## Filter drugR markers---
   # markers of interest loci abundance table
+  print("Filter drugR markers")
   if(length(gene_ids) > 1){
     moi_loci_abd_table = ampseq_object@gt[, markers$gene_id %in% gene_ids]  
   }else{
@@ -3632,21 +3771,42 @@ haplotypes_respect_to_reference = function(ampseq_object,
   
   
   ## Remove read abundace---
+  print("Removing read abundance...")
   moi_loci_abd_table = gsub(":[0-9]+", "", moi_loci_abd_table)
   
   moi_loci_dna_table = moi_loci_abd_table
   moi_loci_aa_table = moi_loci_abd_table
   
   for(amplicon in colnames(moi_loci_abd_table)){ # For each amplicon in columns
-    for(sample in 1:nrow(moi_loci_abd_table)){ # For each sample in rows
+    for(sample in (1:nrow(moi_loci_abd_table))){ # For each sample in rows
       
       locus = moi_loci_abd_table[sample, amplicon] # Get the genotype in the locus
       
-      locus = gsub('\\d+(D|I)=[ATGC]+', '', locus) # REMOVE WHEN INDELs DETECTION IS IMPLEMENTED
       
-      if(is.na(locus) |
-         locus == ''
-         ){ # if the locus is NULL complete the cell with NA
+      # locus = gsub('\\d+(D|I)=[ATGC]+', '', locus) # REMOVE WHEN INDELs DETECTION IS IMPLEMENTED
+      # 
+      # if(!is.na(locus)){# REMOVE WHEN INDELs DETECTION IS IMPLEMENTED
+      # 
+      #   if(locus == ''){
+      #     locus = '.'
+      #   }
+      # 
+      #   if(grepl('^_', locus)){
+      #     locus = gsub('^_', '._', locus)
+      #   }
+      # 
+      #   if(grepl('\\._\\.', locus)){
+      #     locus = '.'
+      #   }
+      # 
+      #   if(grepl('_', locus)){
+      #     locus = gsub('^_', '._', locus)
+      #   }
+      # 
+      # }
+
+      
+      if(is.na(locus)){ # if the locus is NULL complete the cell with NA
         
         moi_loci_dna_table[sample, amplicon] = NA
         moi_loci_aa_table[sample, amplicon] = NA
@@ -3660,8 +3820,70 @@ haplotypes_respect_to_reference = function(ampseq_object,
         
         for(clone in clones){ # for each clone get alleles of all different SNPs
           
-          alleles = paste0(unlist(strsplit(gsub('[ATCGDI=]+$', '', clone), '[ATCGDI//.]+')),
+          alleles = paste0(unlist(str_extract_all(clone, '\\d+')),
                            unlist(strsplit(gsub('^[0-9]+', '', clone), '[0-9]+')))
+          
+          
+          if(!is.na(markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['downstream_no_cds_pos']])){
+            downstream_no_cds_pos = markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['downstream_no_cds_pos']]
+            final_pos = markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['length']]
+            
+            intron_alleles = alleles[as.integer(str_extract(alleles, '\\d+')) %in% downstream_no_cds_pos:final_pos]
+            
+            alleles = alleles[!(as.integer(str_extract(alleles, '\\d+')) %in% downstream_no_cds_pos:final_pos)]
+            
+            if(length(alleles) == 0){
+              alleles = '.'
+            }
+            
+          }
+          
+          if(!is.na(markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['upstream_no_cds_pos']])){
+            upstream_no_cds_pos = markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['upstream_no_cds_pos']]
+            final_pos = markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['length']]
+            
+            intron_alleles = alleles[as.integer(str_extract(alleles, '\\d+')) %in% 1:upstream_no_cds_pos]
+            
+            alleles = alleles[!(as.integer(str_extract(alleles, '\\d+')) %in% 1:upstream_no_cds_pos)]
+            
+            if(length(alleles) == 0){
+              alleles = '.'
+            }else{
+              
+              temp_alleles = data.frame(position = str_extract(alleles, '\\d+'),
+                                        allele = gsub('\\d+', '', alleles))
+              
+              temp_alleles[["position"]] = as.integer(temp_alleles[["position"]]) - 
+                as.integer(upstream_no_cds_pos)
+              
+              alleles = paste0(temp_alleles[["position"]], temp_alleles[["allele"]])
+              
+            }
+          }
+          
+          
+          if(!is.na(markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['intronic_pos']])){
+            start_intronic_pos = gsub(',\\d+$', '', markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['intronic_pos']])
+            end_intronic_pos = gsub('^\\d+,', '', markers_of_interest[markers_of_interest[['amplicon']] == amplicon, ][['intronic_pos']])
+            
+            intron_alleles = alleles[as.integer(str_extract(alleles, '\\d+')) %in% start_intronic_pos:end_intronic_pos]
+            
+            alleles = alleles[!(as.integer(str_extract(alleles, '\\d+')) %in% start_intronic_pos:end_intronic_pos)]
+            
+            if(length(alleles) == 0){
+              alleles = '.'
+            }else{
+              
+              temp_alleles = data.frame(position = str_extract(alleles, '\\d+'),
+                                        allele = gsub('\\d+', '', alleles))
+              
+              temp_alleles[["position"]] = as.integer(temp_alleles[["position"]]) - 
+                (as.integer(end_intronic_pos) - as.integer(start_intronic_pos) + 1)
+              
+              alleles = paste0(temp_alleles[["position"]], temp_alleles[["allele"]])
+              
+            }
+          }
           
           dna_alleles = NULL
           aa_alleles = NULL
@@ -3673,47 +3895,55 @@ haplotypes_respect_to_reference = function(ampseq_object,
             
           }else{
             
-            codons = data.frame(alleles = gsub('[0-9]','',alleles), cds_position = sapply(alleles, function(allele){
+            if("." %in% alleles){
               
-              # position in the mhap
-              mhap_position = as.integer(gsub('[ATCGDI=]+', '', allele))
+              codons = "."
               
-              # variant or nucleotide found
-              #mhap_variant = gsub('[0-9]+', '', allele)
+            }else{
               
-              # calculate position in the CDS
-              
-              cds_position = markers_of_interest[markers_of_interest$amplicon == amplicon,'start_cds'] + mhap_position - 1
-              
-            }))
-            
-            
-            # Identify nucleotide in the reference strain
-            codons$ref_variant = sapply(1:nrow(codons), function(x){
-              
-              if(grepl('D=',codons[x, 'alleles'])){
+              codons = data.frame(alleles = gsub('[0-9]','',alleles), cds_position = sapply(alleles, function(allele){
                 
-                gsub('D=', '',codons[x, 'alleles'])
+                # position in the mhap
+                mhap_position = as.integer(str_extract(allele, '\\d+'))
                 
-              }else if(grepl('I=',codons[x, 'alleles'])){
+                # variant or nucleotide found
+                #mhap_variant = gsub('[0-9]+', '', allele)
                 
-                ''
+                # calculate position in the CDS
                 
-              }else{
+                cds_position = markers_of_interest[markers_of_interest$amplicon == amplicon,'start_cds'] + mhap_position - 1
                 
-                as.character(subseq(ref_seqs[which(names(ref_seqs) ==
-                                                     markers_of_interest[markers_of_interest$amplicon == amplicon, 'gene_id'])],
-                                    start = codons[x, 'cds_position'],
-                                    end = codons[x,'cds_position']))
-                
-              }
+              }))
               
+              
+              # Identify nucleotide in the reference strain
+              codons$ref_variant = sapply(1:nrow(codons), function(x){
+                
+                if(grepl('D=',codons[x, 'alleles'])){
+                  
+                  gsub('D=', '',codons[x, 'alleles'])
+                  
+                }else if(grepl('I=',codons[x, 'alleles'])){
+                  
+                  ''
+                  
+                }else{
+                  
+                  as.character(subseq(ref_seqs[which(names(ref_seqs) ==
+                                                       markers_of_interest[markers_of_interest$amplicon == amplicon, 'gene_id'])],
+                                      start = codons[x, 'cds_position'],
+                                      end = codons[x,'cds_position']))
+                  
+                }
+                
               })
-            
-            # calculate the aminoacid position
-            codons$aa_position = ceiling(codons$cds_position/3)
-            codons$first_nucleotide = 3*codons$aa_position - 2
-            codons$last_nucleotide = 3*codons$aa_position
+              
+              # calculate the aminoacid position
+              codons$aa_position = ceiling(codons$cds_position/3)
+              codons$first_nucleotide = 3*codons$aa_position - 2
+              codons$last_nucleotide = 3*codons$aa_position
+              
+            }
             
           }
           
@@ -3768,6 +3998,8 @@ haplotypes_respect_to_reference = function(ampseq_object,
               
               sample_codon = sample_codon[order(sample_codon$cds_position),]
               
+              sample_codon$alleles = gsub('(D|I)=', '', sample_codon$alleles)
+              
               mhap_aa_variant = ifelse(markers_of_interest[markers_of_interest$amplicon == amplicon,'strand'] == "+",
                                        as.character(Biostrings::translate(DNAString(paste0(sample_codon$alleles, collapse = "")))),
                                        as.character(Biostrings::translate(reverseComplement(DNAString(paste0(sample_codon$alleles, collapse = ""))))))
@@ -3778,16 +4010,24 @@ haplotypes_respect_to_reference = function(ampseq_object,
                                                           codons[codons$aa_position == codon,][['ref_variant']],
                                                           '>',
                                                           codons[codons$aa_position == codon,][['alleles']]), collapse = " "))
-                aa_alleles = c(aa_alleles, paste0(ref_aa_variant, codon, mhap_aa_variant))
+                
+                if(ref_aa_variant != mhap_aa_variant){
+                  aa_alleles = c(aa_alleles, paste0(ref_aa_variant, codon, mhap_aa_variant))
+                }
+                
               }else{
                 dna_alleles = c(dna_alleles, paste(paste0('c.',
                                                           markers_of_interest[markers_of_interest$amplicon == amplicon,'ref_length'] - 
                                                             codons[codons$aa_position == codon,][['cds_position']] + 1,
                                                           reverseComplement(DNAStringSet(codons[codons$aa_position == codon,][['ref_variant']])), '>',
                                                           reverseComplement(DNAStringSet(codons[codons$aa_position == codon,][['alleles']]))), collapse = ' '))
-                aa_alleles = c(aa_alleles, paste0(ref_aa_variant,
-                                                  ceiling((markers_of_interest[markers_of_interest$amplicon == amplicon,'ref_length'] - 3*codon + 1)/3),
-                                                  mhap_aa_variant))
+                
+                if(ref_aa_variant != mhap_aa_variant){
+                  aa_alleles = c(aa_alleles, paste0(ref_aa_variant,
+                                                    ceiling((markers_of_interest[markers_of_interest$amplicon == amplicon,'ref_length'] - 3*codon + 1)/3),
+                                                    mhap_aa_variant))
+                }
+                
                 
               }
               
@@ -3802,14 +4042,17 @@ haplotypes_respect_to_reference = function(ampseq_object,
           
         }
         
-        moi_loci_dna_table[sample, amplicon] = paste(dna_clones, collapse = " / ")
-        moi_loci_aa_table[sample, amplicon] = paste(aa_clones, collapse = " / ")
-        
+        moi_loci_dna_table[sample, amplicon] = paste(unique(dna_clones), collapse = " / ")
+        moi_loci_aa_table[sample, amplicon] = paste(unique(aa_clones), collapse = " / ")
         
       }
     }
   }
   
+  
+  moi_loci_aa_table[moi_loci_aa_table == '' |
+                      moi_loci_aa_table == ' / p.(=)' |
+                      moi_loci_aa_table == 'p.(=) / '] = 'p.(=)'
   
   if(plot_haplo_freq){
     
@@ -3832,22 +4075,6 @@ haplotypes_respect_to_reference = function(ampseq_object,
                                        colnames(moi_loci_aa_table)[colnames(moi_loci_aa_table) %in% 
                                                                      markers_of_interest[markers_of_interest$gene_id == gene_ids[gene],][['amplicon']]]))
       
-      # if(length(gene_ids) > 1){
-      #   
-      #   gene_aa = matrix(moi_loci_aa_table[, colnames(moi_loci_aa_table) %in% 
-      #                                        markers_of_interest[markers_of_interest$gene_id == gene_ids[gene],][['amplicon']]],
-      #                    ncol = sum(colnames(moi_loci_aa_table) %in% 
-      #                                 markers_of_interest[markers_of_interest$gene_id == gene_ids[gene],][['amplicon']]),
-      #                    dimnames = list(rownames(moi_loci_aa_table),
-      #                                    colnames(moi_loci_aa_table)[colnames(moi_loci_aa_table) %in% 
-      #                                                                  markers_of_interest[markers_of_interest$gene_id == gene_ids[gene],][['amplicon']]]))
-      #   
-      # }else{
-      #   gene_aa = matrix(moi_loci_aa_table[,grepl(gene_ids[gene], colnames(moi_loci_aa_table))],
-      #                    ncol = 1,
-      #                    dimnames = list(rownames(moi_loci_aa_table),
-      #                                    gene_ids))
-      # }
       
       # filter amplicons for the gene of interest
       gene_of_interest_info = markers_of_interest[markers_of_interest[['gene_id']] == gene_ids[gene],]
@@ -4225,6 +4452,7 @@ haplotypes_respect_to_reference = function(ampseq_object,
   
 }
 
+
 ### drug_resistant_haplotypes----
 
 drug_resistant_haplotypes = function(ampseq_object,
@@ -4316,7 +4544,7 @@ drug_resistant_haplotypes = function(ampseq_object,
         
         found_positions = unique(as.character(gsub('^[A-Z]',
                                                    '',
-                                                   gsub('[A-Z]$',
+                                                   gsub('([A-Z]$|\\*$)',
                                                         '',
                                                         found_positions))))
         
@@ -4701,18 +4929,32 @@ drug_resistant_haplotypes = function(ampseq_object,
             
             sample_phenotype = paste(sample_phenotype, collapse = '; ')
             
-            aacigar_haplotype = paste(aacigar_haplotype[order(aacigar_haplotype$position),'aacigar_haplotype'], collapse = " ")
-            
+
             
             # Update for each amplicon in the corresponding gene
             if(is.na(aacigar_table[sample, gene])){
+              
+              aacigar_haplotype = paste(aacigar_haplotype[order(aacigar_haplotype$position),'aacigar_haplotype'], collapse = " ")
               
               aacigar_table[sample, gene] = aacigar_haplotype
               phenotype_table[sample, gene] = sample_phenotype
               
             }else{
               
-              aacigar_table[sample, gene] = paste(aacigar_table[sample, gene], aacigar_haplotype, sep = ' ')
+              previous_aa_cigar = unlist(strsplit(aacigar_table[sample, gene], ' '))
+              
+              previous_aa_cigar_table = data.frame(position = as.integer(str_extract(previous_aa_cigar, '\\d+')),
+                                                   aacigar_haplotype = previous_aa_cigar
+                                                   )
+              
+              aacigar_haplotype = rbind(previous_aa_cigar_table,
+                                              aacigar_haplotype)
+              
+              aacigar_haplotype = paste(aacigar_haplotype[order(aacigar_haplotype$position),'aacigar_haplotype'], collapse = " ")
+              
+              aacigar_table[sample, gene] = aacigar_haplotype
+              
+              #aacigar_table[sample, gene] = paste(aacigar_table[sample, gene], aacigar_haplotype, sep = ' ')
               phenotype_table[sample, gene] = paste(phenotype_table[sample, gene], sample_phenotype, sep = '; ')
               
             }
@@ -4912,9 +5154,7 @@ drug_resistant_haplotypes = function(ampseq_object,
                                         Genotype = c(aacigar_table),
                                         Phenotype = c(phenotype_table))
   
-  
   genotype_phenotype_match = genotype_phenotype_table[!duplicated(genotype_phenotype_table$Genotype),-1]
-  
   
   genotype_phenotype_match_mono = genotype_phenotype_match[!grepl('\\|',genotype_phenotype_match$Genotype),]
   
@@ -4927,11 +5167,9 @@ drug_resistant_haplotypes = function(ampseq_object,
   genotype_phenotype_match_poly2$Genotype = gsub('[A-z]\\|', '', genotype_phenotype_match_poly2$Genotype)
   genotype_phenotype_match_poly2$Phenotype = gsub('.+\\|', '', genotype_phenotype_match_poly2$Phenotype)
   
-  
   genotype_phenotype_match = rbind(genotype_phenotype_match_mono,
                                    genotype_phenotype_match_poly1,
                                    genotype_phenotype_match_poly2)
-  
   
   genotype_phenotype_match = genotype_phenotype_match[!duplicated(genotype_phenotype_match$Genotype),]
   
@@ -5001,61 +5239,128 @@ drug_resistant_haplotypes = function(ampseq_object,
   
   print("Summarizing haplotype counts")
   
-  haplotype_counts = extended_aacigar_table %>%
-    summarise(count = n(), .by = c(gene_names, var1, var2, haplotype))
   
-  # 
-  # print("Removing undesired categories based on var_filter")
-  # if(!is.null(filters)){
-  #   filters = strsplit(filters,';')
-  #   for(temp_filter in 1:length(filters)){
-  #     if(which(variables == filters[[temp_filter]][1]) == 2){
-  #       haplotype_counts %<>% filter(var1 %in% strsplit(filters[[temp_filter]][2],',')[[1]])
-  #       samples_pop_quarter %<>% filter(var1 %in% strsplit(filters[[temp_filter]][2],',')[[1]])
-  #     }else if(which(variables == filters[[temp_filter]][1]) == 3){
-  #       haplotype_counts %<>% filter(var2 %in% strsplit(filters[[temp_filter]][2],',')[[1]])
-  #       samples_pop_quarter %<>% filter(var2 %in% strsplit(filters[[temp_filter]][2],',')[[1]])
-  #     }
-  #   }
-  # }
+  haplotype_counts = extended_aacigar_table %>%
+    summarise(allele_count = n(), .by = c(gene_names, gene_ids, var1, var2, haplotype))
+  
+  haplotype_counts2 = extended_aacigar_table %>%
+    summarise(count = 1, .by = c(Sample_id, gene_names, gene_ids, var1, var2, haplotype))
+  
+  haplotype_counts2 = haplotype_counts2 %>%
+    summarise(sample_count = n(), .by = c(gene_names, gene_ids, var1, var2, haplotype))
+  
+  haplotype_counts = left_join(haplotype_counts,
+                               haplotype_counts2,
+                               by = c('gene_names', 'gene_ids', 'var1', 'var2', 'haplotype'))
+  
+  genotype_phenotype_table_w_meta = left_join(genotype_phenotype_table,
+                                       metadata,
+                                       by = join_by('Sample' == 'Sample_id')
+                                       )
   
   print('Calculating haplotype frequencies')
+  
+  haplotype_counts$genotyped_samples = NA
+  haplotype_counts$total_nalleles = NA
+  
+  haplotype_counts$prev = NA
+  haplotype_counts$prev_lower = NA
+  haplotype_counts$prev_upper = NA
   haplotype_counts$freq = NA
   haplotype_counts$freq_lower = NA
   haplotype_counts$freq_upper = NA
   
   
-  for(gene in levels(as.factor(haplotype_counts$gene_names))){
-    for(Pop in levels(as.factor(haplotype_counts[haplotype_counts$gene_names == gene,][['var1']]))){
-      for(date in levels(as.factor(haplotype_counts[haplotype_counts$gene_names == gene&
+  for(gene in levels(as.factor(haplotype_counts$gene_ids))){
+    for(Pop in levels(as.factor(haplotype_counts[haplotype_counts$gene_ids == gene,][['var1']]))){
+      for(date in levels(as.factor(haplotype_counts[haplotype_counts$gene_ids == gene&
                                                     haplotype_counts$var1 == Pop,][['var2']]))){
         
-        temp_freq = binconf(haplotype_counts[haplotype_counts$gene_names == gene&
-                                               haplotype_counts$var1 == Pop&
-                                               haplotype_counts$var2 == date,][['count']],
-                            sum(haplotype_counts[haplotype_counts$gene_names == gene&
-                                                   haplotype_counts$var1 == Pop&
-                                                   haplotype_counts$var2 == date,][['count']]),
+        total_number_of_alleles = sum(haplotype_counts[haplotype_counts$gene_ids == gene&
+                                                         haplotype_counts$var1 == Pop&
+                                                         haplotype_counts$var2 == date,][['allele_count']])
+        allele_count = haplotype_counts[haplotype_counts$gene_ids == gene&
+                                          haplotype_counts$var1 == Pop&
+                                          haplotype_counts$var2 == date,][['allele_count']]
+        
+        total_number_of_genotyped_samples = nrow(genotype_phenotype_table_w_meta[genotype_phenotype_table_w_meta[['var1']] == Pop &
+                                                                                  genotype_phenotype_table_w_meta[['var2']] == date &
+                                                                                  genotype_phenotype_table_w_meta[['Gene']] == gene &
+                                                                                  !grepl('Gene .+ did not amplify', genotype_phenotype_table_w_meta[['Phenotype']])
+                                                                                ,])
+        number_of_samples_with_allele = haplotype_counts2[haplotype_counts2$gene_ids == gene&
+                                                            haplotype_counts2$var1 == Pop&
+                                                            haplotype_counts2$var2 == date,][['sample_count']]
+        
+        temp_freq = binconf(allele_count,
+                            total_number_of_alleles,
                             method = 'exact'
         )
         
-        haplotype_counts[haplotype_counts$gene_names == gene&
+        temp_prev = binconf(number_of_samples_with_allele,
+                            total_number_of_genotyped_samples,
+                            method = 'exact'
+        )
+        
+        haplotype_counts[haplotype_counts$gene_ids == gene&
+                           haplotype_counts$var1 == Pop&
+                           haplotype_counts$var2 == date,][['genotyped_samples']] = total_number_of_genotyped_samples
+        
+        haplotype_counts[haplotype_counts$gene_ids == gene&
+                           haplotype_counts$var1 == Pop&
+                           haplotype_counts$var2 == date,][['total_nalleles']] = total_number_of_alleles
+        
+        haplotype_counts[haplotype_counts$gene_ids == gene&
                            haplotype_counts$var1 == Pop&
                            haplotype_counts$var2 == date,][['freq']] = temp_freq[,1]
         
-        haplotype_counts[haplotype_counts$gene_names == gene&
+        haplotype_counts[haplotype_counts$gene_ids == gene&
                            haplotype_counts$var1 == Pop&
                            haplotype_counts$var2 == date,][['freq_lower']] = temp_freq[,2]
         
-        haplotype_counts[haplotype_counts$gene_names == gene&
+        haplotype_counts[haplotype_counts$gene_ids == gene&
                            haplotype_counts$var1 == Pop&
                            haplotype_counts$var2 == date,][['freq_upper']] = temp_freq[,3]
+        
+        haplotype_counts[haplotype_counts$gene_ids == gene&
+                           haplotype_counts$var1 == Pop&
+                           haplotype_counts$var2 == date,][['prev']] = temp_prev[,1]
+        
+        haplotype_counts[haplotype_counts$gene_ids == gene&
+                           haplotype_counts$var1 == Pop&
+                           haplotype_counts$var2 == date,][['prev_lower']] = temp_prev[,2]
+        
+        haplotype_counts[haplotype_counts$gene_ids == gene&
+                           haplotype_counts$var1 == Pop&
+                           haplotype_counts$var2 == date,][['prev_upper']] = temp_prev[,3]
         
       }
     }
   }
   
-  haplotype_counts %<>% mutate(gene_haplo = paste(gene_names, haplotype, sep = ": "))
+  haplotype_counts$compact_haplotype = NA
+  
+  for(haplo in unique(haplotype_counts$haplotype)){
+    
+    compact_haplo = unlist(strsplit(haplo, ' '))
+    
+    ref = gsub('\\d+\\w+$', '', compact_haplo)
+    alt = gsub('^\\w+\\d+', '', compact_haplo)
+    
+    compact_haplo = compact_haplo[ref != alt]
+    
+    if(length(compact_haplo) == 0){
+      compact_haplo = 'p.(=)'
+    }
+    
+    compact_haplo = paste(compact_haplo, collapse = ' ')
+    
+    haplotype_counts[haplotype_counts[['haplotype']] == haplo, ][['compact_haplotype']] = compact_haplo
+    
+  }
+  
+  haplotype_counts %<>% mutate(gene_haplo = paste(gene_names, haplotype, sep = ": "),
+                               gene_haplo_compact = paste(gene_names, compact_haplotype, sep = ": "))
   
   haplotype_counts$phenotype = NA
   
@@ -5078,16 +5383,16 @@ drug_resistant_haplotypes = function(ampseq_object,
       }else if(grepl('Linked', Phenotype)){
         reds[1]
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) == 1){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) == 1){
         reds[2]
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) == 2){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) == 2){
         reds[3]
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) == 3){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) == 3){
         reds[5]
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) >= 4){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) >= 4){
         reds[6]
       }else if(grepl('Sensitive', Phenotype)){
         blue
@@ -5096,7 +5401,7 @@ drug_resistant_haplotypes = function(ampseq_object,
         'gold3'
       }else if(grepl('variant unreported', Phenotype) & !grepl('resistance', Phenotype)){
         orange
-      }else if(grepl("^Amplicon.+amplify; $", Phenotype)){
+      }else if(grepl("^Amplicon.+amplify(; .+)?$", Phenotype)){
         'gray70'
       }else if(grepl('Gene .+ did not amplify', Phenotype)){
         'gray30'
@@ -5148,16 +5453,16 @@ drug_resistant_haplotypes = function(ampseq_object,
       }else if(grepl('Linked', Phenotype)){
         5
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) == 1){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) == 1){
         4
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) == 2){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) == 2){
         3
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) == 3){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) == 3){
         2
       }else if(grepl('resistance', Phenotype) & 
-               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| )+ resistance')), '\\d+')))) >= 4){
+               sum(as.integer(unlist(str_extract_all(unlist(str_extract_all(Phenotype, '\\d+ ([A-z]| |,)+ resistance')), '\\d+')))) >= 4){
         1
       }else if(grepl('Sensitive', Phenotype)){
         8
@@ -5166,7 +5471,7 @@ drug_resistant_haplotypes = function(ampseq_object,
         7
       }else if(grepl('variant unreported', Phenotype) & !grepl('resistance', Phenotype)){
         6
-      }else if(grepl("^Amplicon.+amplify(; )?$", Phenotype)){
+      }else if(grepl("^Amplicon.+amplify(; .+)?$", Phenotype)){
         9
       }else if(grepl('Gene .+ did not amplify', Phenotype)){
         10
@@ -5205,9 +5510,31 @@ drug_resistant_haplotypes = function(ampseq_object,
     
   }
   
+  genotype_phenotype_match_sorted$compact_haplotype = NA
+  
+  for(haplo in unique(genotype_phenotype_match_sorted$Genotype)){
+    
+    compact_haplo = unlist(strsplit(haplo, ' '))
+    
+    ref = gsub('\\d+\\w+$', '', compact_haplo)
+    alt = gsub('^\\w+\\d+', '', compact_haplo)
+    
+    compact_haplo = compact_haplo[ref != alt]
+    
+    if(length(compact_haplo) == 0){
+      compact_haplo = 'p.(=)'
+    }
+    
+    compact_haplo = paste(compact_haplo, collapse = ' ')
+    
+    genotype_phenotype_match_sorted[genotype_phenotype_match_sorted[['Genotype']] == haplo, ][['compact_haplotype']] = compact_haplo
+    
+  }
+  
   
   genotype_phenotype_match_sorted %<>% mutate(
-    gene_haplo = paste(Gene_name, Genotype, sep = ': ')
+    gene_haplo = paste(Gene_name, Genotype, sep = ': '),
+    gene_haplo_compact = paste(Gene_name, compact_haplotype, sep = ': ')
   )
   
   
@@ -5223,14 +5550,17 @@ drug_resistant_haplotypes = function(ampseq_object,
   
   
   haplotype_counts$gene_haplo = factor(haplotype_counts$gene_haplo,
-                                       levels = genotype_phenotype_match_sorted$gene_haplo)
+                                               levels = genotype_phenotype_match_sorted$gene_haplo)
+  
+  
   
   print('haplotype_freq_barplot')
   haplotype_freq_barplot = haplotype_counts %>%
-    ggplot(aes(y = freq, x = var2, fill  = gene_haplo, alpha = gene_haplo)) +
+    ggplot(aes(y = prev, x = var2, fill  = gene_haplo, alpha = gene_haplo)) +
     geom_col(color = 'gray75')+
     facet_grid(var1 ~ gene_names)+
-    scale_fill_manual(values = genotype_phenotype_match_sorted$color_pal)+
+    scale_fill_manual(values = genotype_phenotype_match_sorted$color_pal, 
+                      labels = genotype_phenotype_match_sorted$gene_haplo_compact)+
     scale_alpha_manual(breaks = genotype_phenotype_match_sorted$gene_haplo, values = genotype_phenotype_match_sorted$transparency)+
     theme_bw()+
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
@@ -5244,12 +5574,13 @@ drug_resistant_haplotypes = function(ampseq_object,
   
   print('haplotypes_freq_lineplot')
   haplotypes_freq_lineplot = haplotype_counts %>%
-    ggplot(aes(y = freq, x = var2, group  = gene_haplo, color = gene_haplo)) +
+    ggplot(aes(y = prev, x = var2, group  = gene_haplo, color = gene_haplo)) +
     geom_point()+
-    geom_errorbar(aes(ymin = freq_lower, ymax = freq_upper), alpha = .5, width = .2)+
+    geom_errorbar(aes(ymin = prev_lower, ymax = prev_upper), alpha = .5, width = .2)+
     geom_line()+
     facet_grid(var1 ~ gene_names)+
-    scale_color_manual(values = genotype_phenotype_match_sorted$color_pal)+
+    scale_color_manual(values = genotype_phenotype_match_sorted$color_pal, 
+                       labels = genotype_phenotype_match_sorted$gene_haplo_compact)+
     theme_bw()+
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
           legend.position = 'bottom') +
@@ -5260,6 +5591,98 @@ drug_resistant_haplotypes = function(ampseq_object,
            color=guide_legend(ncol=3))
   
   #names(haplotype_counts) = c(names(haplotype_counts)[1], variables[2:3], names(haplotype_counts)[-1:-3])
+  
+  
+  print('generating table for minimal report')
+  
+  
+  
+  
+  loci_aa_table_long = as.data.frame(loci_aa_table) %>%
+    mutate(Sample_id = rownames(loci_aa_table)) %>%
+    pivot_longer(cols = all_of(colnames(loci_aa_table)),
+                 names_to = 'Marker',
+                 values_to = 'Polymorphism'
+                )
+  
+  loci_aa_table_long = left_join(loci_aa_table_long,
+                                 drug_markers[,c('amplicon', 'gene_id')],
+                                 by = join_by('Marker' == 'amplicon')
+                                 )
+  
+  loci_aa_table_long[['gene_name']] = NA
+  
+  for(gene in 1:length(gene_ids)){
+    loci_aa_table_long[loci_aa_table_long[['gene_id']] == gene_ids[gene], ][['gene_name']] = gene_names[gene]
+  }
+  
+  
+  
+  minimal_aa_table = NULL
+
+  
+  for(gene in unique(loci_aa_table_long[['gene_id']])){
+    
+    polymorphisms = unique(unlist(strsplit(loci_aa_table_long[loci_aa_table_long[['gene_id']] == gene,][['Polymorphism']], '( / | )')))
+    
+    polymorphisms = polymorphisms[!is.na(polymorphisms)]
+    
+    for(polymorphism in polymorphisms){
+      
+      temp_summary_aa_table = data.frame(Gene_id = gene,
+                                         Gene_name = gene_names[which(gene_ids == gene)],
+                                         Polymorphism = polymorphism
+                                         )
+      
+      Annotation = drugR_reference_alleles[drugR_reference_alleles$Gene_Id == gene &
+                                             drugR_reference_alleles$Mutation == polymorphism, ][['Annotation']]
+      
+      if(length(Annotation) == 1){
+        temp_summary_aa_table[['Annotation']] = Annotation
+      }else if(polymorphism != 'p.(=)'){
+        temp_summary_aa_table[['Annotation']] = 'Polymorphism respect to the reference strain'
+      }else{
+        temp_summary_aa_table[['Annotation']] = 'Sensitive phenotype'
+        
+      }
+      
+      minimal_aa_table = rbind(minimal_aa_table, temp_summary_aa_table)
+      
+    }
+  }
+  
+  
+  
+  minimal_aa_table[['Samples_with_polymorphism']] = NA
+  minimal_aa_table[['Genotyped_Samples']] = NA
+
+  
+  for(gene in minimal_aa_table[['Gene_id']]){
+    polymorphisms = unique(minimal_aa_table[minimal_aa_table[['Gene_id']] == gene,][['Polymorphism']])
+    
+    minimal_aa_table[minimal_aa_table[['Gene_id']] == gene, ][['Genotyped_Samples']] =
+      length(unique(loci_aa_table_long[loci_aa_table_long$gene_id == gene &
+                           !is.na(loci_aa_table_long$Polymorphism)
+                           , ][['Sample_id']]))
+    
+    
+    for(polymorphism in polymorphisms){
+      
+      if(polymorphism == 'p.(=)'){
+        polymorphism = 'p.\\(=\\)'
+      }
+      
+      minimal_aa_table[minimal_aa_table[['Gene_id']] == gene &
+                         grepl(polymorphism, minimal_aa_table[['Polymorphism']])
+                         , ][['Samples_with_polymorphism']] = 
+        length(unique(loci_aa_table_long[loci_aa_table_long$gene_id == gene &
+             !is.na(loci_aa_table_long$Polymorphism) & 
+               grepl(polymorphism, loci_aa_table_long$Polymorphism)
+             , ][['Sample_id']]))
+      
+    }
+  }
+  
   
   print('Defining phenotypes based to drug of interest')
   
@@ -5453,7 +5876,6 @@ drug_resistant_haplotypes = function(ampseq_object,
   }
   
   
-  
   # if(!is.null(filters)){
   #   #filters = strsplit(filters,';')
   #   for(temp_filter in 1:length(filters)){
@@ -5548,8 +5970,6 @@ drug_resistant_haplotypes = function(ampseq_object,
          x = 'Date of Collection',
          color = 'Phenotype')
   
-  
-  
   print("Estimating frequency for drug resistant phenotypes")
   
   if(!is.null(Longitude) & !is.null(Latitude)){
@@ -5558,7 +5978,6 @@ drug_resistant_haplotypes = function(ampseq_object,
       summarise(Longitude = mean(Longitude),
                 Latitude = mean(Latitude),
                 count = sum(count), .by = c(Drug, Phenotype, var1))
-    
     
     drug_phenotype_summary_sdf$ssize = NA
     drug_phenotype_summary_sdf$freq = NA
@@ -5607,7 +6026,6 @@ drug_resistant_haplotypes = function(ampseq_object,
                                                         data = drug_phenotype_summary_sdf,
                                                         proj4string = CRS("+init=epsg:4326"))
     
-    
     tmap_mode('view')
     print('i_drug_map')
     i_drug_map = tm_shape(drug_phenotype_summary_sdf)+
@@ -5626,7 +6044,9 @@ drug_resistant_haplotypes = function(ampseq_object,
                                    drug_phenotype_summary_sdf = drug_phenotype_summary_sdf,
                                    i_drug_map = i_drug_map,
                                    haplotypes_freq_lineplot = haplotypes_freq_lineplot,
-                                   haplotype_freq_barplot = haplotype_freq_barplot)
+                                   haplotype_freq_barplot = haplotype_freq_barplot,
+                                   drug_markers_table = drug_markers,
+                                   minimal_aa_table = minimal_aa_table)
     
   }else{
     
@@ -5637,10 +6057,10 @@ drug_resistant_haplotypes = function(ampseq_object,
                                    drug_phenotyope_lineplot = drug_phenotyope_lineplot,
                                    drug_phenotype_barplot = drug_phenotype_barplot,
                                    haplotypes_freq_lineplot = haplotypes_freq_lineplot,
-                                   haplotype_freq_barplot = haplotype_freq_barplot)
+                                   haplotype_freq_barplot = haplotype_freq_barplot,
+                                   drug_markers_table = drug_markers,
+                                   minimal_aa_table = minimal_aa_table)
   }
-  
-  
   
   return(drug_resistant_hap_list)
   
