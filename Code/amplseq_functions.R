@@ -639,7 +639,13 @@ ampseq2cigar = function(ampseq_object){
     
     temp_cigar_long = unlist(strsplit(gt[,mhap], '_'))
     
-    temp_cigar_long = data.frame(Sample_id = names(temp_cigar_long),
+    nclones = sapply(gt[,mhap], function(Sample){
+      sum(nchar(unlist(str_extract_all(Sample, '_'))))
+    }) + 1
+    
+    nclones[is.na(nclones)] = 1
+    
+    temp_cigar_long = data.frame(Sample_id = rep(names(nclones), nclones),
                                  Amplicon = colnames(gt)[mhap],
                                  Cigar_allele = gsub(':\\d+$', '', temp_cigar_long),
                                  Read_depth = as.integer(gsub('^.+:', '', temp_cigar_long))
@@ -2152,11 +2158,29 @@ setMethod("mask_alt_alleles", signature(obj = "ampseq"),
                                   flanking_INDEL = as.integer(grepl(paste0(paste('(^1', mhaps[mhap,][['length']] + 1, sep = '|'),')(I|D)(=|\\.)[ATGC]+') ,allele))
                                   
                                   if(flanking_INDEL == 1){
-                                    flanking_INDEL_pattern = str_extract_all(allele, paste0(paste('(^1', paste0('[ATGC]?', mhaps[mhap,][['length']] + 1), sep = '|'),')(I|D)(=|\\.)[ATGC]+\\d?'))[[1]]
+                                    temp_flanking_INDEL_pattern = str_extract_all(allele, paste0(paste('(^1', paste0('[ATGC]?', mhaps[mhap,][['length']] + 1), sep = '|'),')(I|D)(=|\\.)[ATGC]+\\d?'))[[1]]
                                     
-                                    flanking_INDEL_replacement = gsub(paste0(paste('(^1', mhaps[mhap,][['length']] + 1, sep = '|'),')(I|D)(=|\\.)[ATGC]+'), '', flanking_INDEL_pattern)
+                                    temp_flanking_INDEL_replacement = gsub(paste0(paste('(^1', mhaps[mhap,][['length']] + 1, sep = '|'),')(I|D)(=|\\.)[ATGC]+'), '', temp_flanking_INDEL_pattern)
                                     
-                                    flanking_INDEL_replacement = ifelse(flanking_INDEL_replacement == '', '.', flanking_INDEL_replacement)
+                                    
+                                    
+                                    if('' %in% temp_flanking_INDEL_replacement){
+                                      
+                                      flanking_INDEL_replacement = '.'
+                                      
+                                    }else{
+                                      
+                                      flanking_INDEL_replacement = allele
+                                      
+                                      for(replacement in 1:length(temp_flanking_INDEL_pattern)){
+                                        
+                                        flanking_INDEL_replacement = gsub(temp_flanking_INDEL_pattern[replacement], temp_flanking_INDEL_replacement[replacement], flanking_INDEL_replacement)
+                                      }
+                                      
+                                    }
+                                    
+                                    flanking_INDEL_pattern = allele
+                                    
                                   }else{
                                     
                                     flanking_INDEL_pattern = NA
@@ -2453,35 +2477,33 @@ setMethod("mask_alt_alleles", signature(obj = "ampseq"),
                       temp_replaced_allele = unlist(strsplit(replaced_alleles[replaced_allele], '\\|\\|'))
                       temp_replacement_allele = unlist(strsplit(replacement_alleles[replaced_allele], '\\|\\|'))
                       
-                      asv_table[asv_table[['Amplicon']] == unique(ASVs_attributes_table_temp[['MHap']]) &
-                                  !is.na(asv_table[['Amplicon']]) &
-                                  grepl(temp_replaced_allele, asv_table[['CIGAR_masked']])
-                                ,][['CIGAR_masked']] = gsub(temp_replaced_allele,
-                                                            temp_replacement_allele, 
-                                                            asv_table[asv_table[['Amplicon']] == unique(ASVs_attributes_table_temp[['MHap']]) &
-                                                                        !is.na(asv_table[['Amplicon']]) &
-                                                                        grepl(temp_replaced_allele, asv_table[['CIGAR_masked']])
-                                                                      ,][['CIGAR_masked']])
                       
                       for(i in 1:length(temp_replaced_allele)){
                         
+                        replaced_pattern = temp_replaced_allele[i]
+                        
+                        asv_table[asv_table[['Amplicon']] == unique(ASVs_attributes_table_temp[['MHap']]) &
+                                    !is.na(asv_table[['Amplicon']]) &
+                                    grepl(paste0('^',replaced_pattern, '$'), asv_table[['CIGAR_masked']])
+                                  ,][['CIGAR_masked']] = gsub(paste0('^',replaced_pattern, '$'),
+                                                              temp_replacement_allele, 
+                                                              asv_table[asv_table[['Amplicon']] == unique(ASVs_attributes_table_temp[['MHap']]) &
+                                                                          !is.na(asv_table[['Amplicon']]) &
+                                                                          grepl(paste0('^',replaced_pattern, '$'), asv_table[['CIGAR_masked']])
+                                                                        ,][['CIGAR_masked']])
+                        
                         for(sample in 1:nrow(gt_masked)){
                           
-                          replaced_pattern = temp_replaced_allele[i]
                           
-                          if(grepl('[ATGC]', substr(replaced_pattern, nchar(replaced_pattern),nchar(replaced_pattern)))){
+                          if(grepl(paste0('(^|_)',replaced_pattern, ':'), gt_masked[sample,mhap])){
                             
-                            replaced_pattern = paste0(replaced_pattern, ':')
-                            replacement_pattern = paste0(temp_replacement_allele[i], ':')
+                            sample_replaced_pattern = str_extract(gt_masked[sample,mhap], paste0('(^|_)',replaced_pattern, ':'))
+                            sample_replacement_pattern = gsub(replaced_pattern, temp_replacement_allele[i], sample_replaced_pattern)
                             
-                          }else{
-                            
-                            replacement_pattern = temp_replacement_allele[i]
+                            gt_masked[sample,mhap] = gsub(sample_replaced_pattern, sample_replacement_pattern, gt_masked[sample,mhap])
                             
                           }
                           
-                          # Mask alleles below threshold
-                          gt_masked[sample,mhap] = gsub(replaced_pattern, replacement_pattern, gt_masked[sample,mhap])
                           
                         }
                         
@@ -3294,11 +3316,29 @@ setMethod("get_ASVs_attributes", signature(obj = "ampseq"),
                                   flanking_INDEL = as.integer(grepl(paste0(paste('(^1', mhaps[mhap,][['length']] + 1, sep = '|'),')(I|D)(=|\\.)[ATGC]+') ,allele))
                                   
                                   if(flanking_INDEL == 1){
-                                    flanking_INDEL_pattern = str_extract_all(allele, paste0(paste('(^1', paste0('[ATGC]?', mhaps[mhap,][['length']] + 1), sep = '|'),')(I|D)(=|\\.)[ATGC]+\\d?'))[[1]]
+                                    temp_flanking_INDEL_pattern = str_extract_all(allele, paste0(paste('(^1', paste0('[ATGC]?', mhaps[mhap,][['length']] + 1), sep = '|'),')(I|D)(=|\\.)[ATGC]+\\d?'))[[1]]
                                     
-                                    flanking_INDEL_replacement = gsub(paste0(paste('(^1', mhaps[mhap,][['length']] + 1, sep = '|'),')(I|D)(=|\\.)[ATGC]+'), '', flanking_INDEL_pattern)
+                                    temp_flanking_INDEL_replacement = gsub(paste0(paste('(^1', mhaps[mhap,][['length']] + 1, sep = '|'),')(I|D)(=|\\.)[ATGC]+'), '', temp_flanking_INDEL_pattern)
                                     
-                                    flanking_INDEL_replacement = ifelse(flanking_INDEL_replacement == '', '.', flanking_INDEL_replacement)
+                                    
+                                    
+                                    if('' %in% temp_flanking_INDEL_replacement){
+                                      
+                                      flanking_INDEL_replacement = '.'
+                                      
+                                    }else{
+                                      
+                                      flanking_INDEL_replacement = allele
+                                      
+                                      for(replacement in 1:length(temp_flanking_INDEL_pattern)){
+                                        
+                                        flanking_INDEL_replacement = gsub(temp_flanking_INDEL_pattern[replacement], temp_flanking_INDEL_replacement[replacement], flanking_INDEL_replacement)
+                                      }
+                                      
+                                    }
+                                    
+                                    flanking_INDEL_pattern = allele
+                                    
                                   }else{
                                     
                                     flanking_INDEL_pattern = NA
@@ -6197,7 +6237,7 @@ get_polygenomic = function(ampseq_object, strata = NULL, update_popsummary = T, 
   if(!is.null(strata)){
     if(na.rm){
       ampseq_object = filter_samples(ampseq_object, v = !(is.na(ampseq_object@metadata[[strata]]) | grepl('NA',ampseq_object@metadata[[strata]])))
-    }else if(length(metadata[is.na(metadata[[strata]]) | grepl('NA',metadata[[strata]]),][[strata]])>0){
+    }else if(length(ampseq_object@metadata[is.na(ampseq_object@metadata[[strata]]) | grepl('NA',ampseq_object@metadata[[strata]]),][[strata]])>0){
       ampseq_object@metadata[is.na(ampseq_object@metadata[[strata]]) | grepl('NA',ampseq_object@metadata[[strata]]),][[strata]] = 'missing data'
     }
     
